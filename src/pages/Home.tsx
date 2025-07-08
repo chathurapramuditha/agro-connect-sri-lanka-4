@@ -1,0 +1,202 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, Users, TrendingUp, Brain, Smartphone, Globe, MessageSquare, BarChart3, Calendar, Leaf } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useLanguage } from '@/contexts/LanguageContext';
+
+const Home = () => {
+  const { t } = useLanguage();
+
+  const features = [
+    {
+      icon: <Brain className="h-8 w-8" />,
+      title: 'AI-Powered Insights',
+      description: 'Get intelligent crop recommendations, price predictions, and farming advice',
+      color: 'bg-blue-500/10 text-blue-600'
+    },
+    {
+      icon: <Users className="h-8 w-8" />,
+      title: 'Direct Connection',
+      description: 'Connect farmers and buyers without middlemen for fair pricing',
+      color: 'bg-green-500/10 text-green-600'
+    },
+    {
+      icon: <TrendingUp className="h-8 w-8" />,
+      title: 'Market Intelligence',
+      description: 'Real-time market prices and demand forecasting',
+      color: 'bg-purple-500/10 text-purple-600'
+    },
+    {
+      icon: <Globe className="h-8 w-8" />,
+      title: 'Multilingual Support',
+      description: 'Available in English, Sinhala, and Tamil languages',
+      color: 'bg-orange-500/10 text-orange-600'
+    }
+  ];
+
+  const stats = [
+    { number: '1000+', label: 'Active Farmers' },
+    { number: '500+', label: 'Verified Buyers' },
+    { number: '50+', label: 'Crop Varieties' },
+    { number: '24/7', label: 'AI Support' }
+  ];
+
+  return (
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="relative bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-green-950/20 dark:via-blue-950/20 dark:to-purple-950/20">
+        <div className="container mx-auto px-4 py-20">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <Badge variant="secondary" className="mb-4">
+                  🚀 AI-Powered Agriculture Platform
+                </Badge>
+                <h1 className="text-4xl lg:text-6xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent leading-tight">
+                  {t('home.title')}
+                </h1>
+                <p className="text-xl text-muted-foreground max-w-lg">
+                  {t('home.subtitle')}
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button size="lg" asChild className="gap-2">
+                  <Link to="/register?type=farmer">
+                    <Leaf className="h-5 w-5" />
+                    {t('home.cta.farmer')}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                
+                <Button size="lg" variant="outline" asChild className="gap-2">
+                  <Link to="/register?type=buyer">
+                    <Users className="h-5 w-5" />
+                    {t('home.cta.buyer')}
+                  </Link>
+                </Button>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 pt-8">
+                {stats.map((stat, index) => (
+                  <div key={index} className="text-center">
+                    <div className="text-2xl font-bold text-primary">{stat.number}</div>
+                    <div className="text-sm text-muted-foreground">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="relative bg-gradient-to-br from-green-100 to-blue-100 dark:from-green-900/20 dark:to-blue-900/20 rounded-2xl p-8 shadow-2xl">
+                <div className="absolute -top-4 -right-4">
+                  <div className="bg-yellow-400 rounded-full p-3 shadow-lg">
+                    <Brain className="h-6 w-6 text-yellow-800" />
+                  </div>
+                </div>
+                
+                <div className="space-y-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+                    <div className="flex items-center gap-3 mb-2">
+                      <MessageSquare className="h-5 w-5 text-blue-600" />
+                      <span className="font-medium">AI Assistant</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      "Based on weather patterns, plant tomatoes next week for optimal yield."
+                    </p>
+                  </div>
+
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+                    <div className="flex items-center gap-3 mb-2">
+                      <BarChart3 className="h-5 w-5 text-green-600" />
+                      <span className="font-medium">Price Prediction</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      "Carrot prices expected to rise 15% next month"
+                    </p>
+                  </div>
+
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Calendar className="h-5 w-5 text-purple-600" />
+                      <span className="font-medium">Crop Calendar</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      "Perfect time for planting seasonal vegetables"
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="text-center space-y-4 mb-16">
+            <Badge variant="outline">Features</Badge>
+            <h2 className="text-3xl lg:text-4xl font-bold">
+              {t('home.ai.title')}
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              {t('home.ai.description')}
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <Card key={index} className="border-0 shadow-sm hover:shadow-md transition-shadow">
+                <CardHeader className="space-y-4">
+                  <div className={`w-16 h-16 rounded-lg ${feature.color} flex items-center justify-center`}>
+                    {feature.icon}
+                  </div>
+                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-base">
+                    {feature.description}
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-to-r from-green-600 to-blue-600">
+        <div className="container mx-auto px-4 text-center">
+          <div className="max-w-3xl mx-auto space-y-6">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white">
+              Ready to Transform Sri Lankan Agriculture?
+            </h2>
+            <p className="text-xl text-green-100">
+              Join thousands of farmers and buyers already using our AI-powered platform
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <Button size="lg" variant="secondary" asChild>
+                <Link to="/marketplace">
+                  Explore Marketplace
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" className="bg-transparent border-white text-white hover:bg-white hover:text-green-600" asChild>
+                <Link to="/ai-chat">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Try AI Assistant
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default Home;
