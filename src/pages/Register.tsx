@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { Eye, EyeOff, Mail, Lock, User, Building, Phone, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,7 +54,7 @@ const Register = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent, userType: 'farmer' | 'buyer') => {
+  const handleSubmit = async (e: React.FormEvent, userType: 'farmer' | 'buyer') => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       alert('Passwords do not match!');
@@ -63,8 +64,34 @@ const Register = () => {
       alert('Please agree to the terms and conditions');
       return;
     }
-    // Here you would typically handle registration
-    console.log('Registration attempt:', { ...formData, userType });
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+          data: {
+            full_name: formData.name,
+            user_type: userType,
+            phone_number: formData.phone,
+            location: formData.location,
+            bio: formData.description,
+          }
+        }
+      });
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      if (data.user) {
+        alert('Registration successful! Please check your email to verify your account.');
+      }
+    } catch (error: any) {
+      alert('Registration failed: ' + error.message);
+    }
   };
 
   return (
