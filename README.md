@@ -1,17 +1,71 @@
-# AgroLink Sri Lanka - Direct Farmer-to-Buyer Platform
+# AgroLink Sri Lanka 🌾
 
-Connect directly with Sri Lankan farmers. Buy fresh produce, get AI-powered farming advice, and support local agriculture.
+A modern agricultural marketplace platform connecting farmers directly with buyers across Sri Lanka. Built with React, TypeScript, and Supabase.
 
-## Prerequisites
+## 🌟 Features
 
-Before you begin, ensure you have the following installed on your system:
+### For Farmers
+- **Product Management**: List and manage farm produce with detailed descriptions
+- **Order Tracking**: Monitor incoming orders and manage deliveries
+- **Direct Sales**: Sell directly to buyers without intermediaries
+- **Blog Platform**: Share farming knowledge and experiences
+- **Profile Management**: Showcase farm details and build reputation
 
-- **Node.js** (version 16 or higher) - [Download here](https://nodejs.org/)
+### For Buyers
+- **Marketplace**: Browse fresh produce from local farmers
+- **Direct Ordering**: Place orders directly with farmers
+- **Order History**: Track purchase history and delivery status
+- **Review System**: Rate and review farmers and products
+- **Blog Interaction**: Read and share agricultural insights
+
+### For Administrators
+- **User Management**: Manage farmer and buyer accounts
+- **Content Moderation**: Oversee blog posts and platform content
+- **Analytics Dashboard**: Monitor platform usage and performance
+- **Communication Tools**: Send notifications and updates to users
+
+## 👤 Default Admin Account
+
+To access the admin dashboard:
+
+1. Go to `/register`
+2. Click the **Admin** tab
+3. Create admin account with:
+   - **Email**: admin@agrolink.lk
+   - **Password**: admin123
+   - **Name**: System Administrator
+4. After registration, login at `/login` using the Admin tab
+
+## 🚀 Tech Stack
+
+- **Frontend**: React 18, TypeScript, Tailwind CSS
+- **UI Components**: Shadcn/ui, Radix UI
+- **Backend**: Supabase (PostgreSQL, Authentication, Real-time)
+- **Routing**: React Router
+- **Icons**: Lucide React
+- **Build Tool**: Vite
+- **State Management**: React Query
+- **Multi-language**: Context-based i18n
+
+## 🌐 Multi-language Support
+
+The platform supports:
+- **English** (default)
+- **Sinhala** (සිංහල)
+- **Tamil** (தமிழ்)
+
+Language can be switched using the language selector in the header.
+
+## 📋 Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js** (version 18 or higher) - [Download here](https://nodejs.org/)
 - **npm** (comes with Node.js) or **yarn**
-- **VS Code** - [Download here](https://code.visualstudio.com/)
 - **Git** - [Download here](https://git-scm.com/)
+- **VS Code** (recommended) - [Download here](https://code.visualstudio.com/)
 
-## Getting Started with VS Code
+## 🛠️ Getting Started
 
 ### Step 1: Clone the Repository
 
@@ -23,54 +77,78 @@ git clone <YOUR_GIT_URL>
 cd agrolink-sri-lanka
 ```
 
-### Step 2: Open in VS Code
-
-```bash
-# Open the project in VS Code
-code .
-```
-
-Or alternatively:
-1. Open VS Code
-2. Go to File → Open Folder
-3. Select the project directory
-
-### Step 3: Install Dependencies
-
-Open the VS Code terminal (Terminal → New Terminal) and run:
+### Step 2: Install Dependencies
 
 ```bash
 # Install all dependencies
 npm install
 ```
 
-### Step 4: Start Development Server
+### Step 3: Start Development Server
 
 ```bash
 # Start the development server
 npm run dev
 ```
 
-The application will be available at `http://localhost:8080`
+The application will be available at `http://localhost:5173`
 
-## Recommended VS Code Extensions
+### Step 4: Set Up Admin Account
 
-Install these extensions for the best development experience:
+1. Open the application in your browser
+2. Navigate to `/register`
+3. Click the **Admin** tab
+4. Create the admin account as described above
 
-1. **ES7+ React/Redux/React-Native snippets** - Provides useful React snippets
-2. **Tailwind CSS IntelliSense** - Autocomplete for Tailwind classes
-3. **TypeScript Importer** - Auto import for TypeScript
+## 🗄️ Database Schema
+
+The application uses Supabase with the following main tables:
+- **profiles** - User profiles (farmers, buyers, admins)
+- **products** - Agricultural products listed by farmers
+- **orders** - Purchase orders between buyers and farmers
+- **reviews** - Product and farmer reviews  
+- **product_categories** - Product categorization
+
+Row Level Security (RLS) is enabled for data protection.
+
+## 📱 User Roles & Access
+
+### Farmers
+- Create and manage product listings
+- View and manage incoming orders
+- Write blog posts about farming
+- Update profile and farm information
+
+### Buyers  
+- Browse marketplace and search products
+- Place orders with farmers
+- Write reviews and ratings
+- Create blog posts about experiences
+
+### Administrators
+- Manage all users and content
+- Access analytics and reports
+- Moderate blog posts and reviews
+- Send communications to users
+
+## 💻 Development
+
+### Recommended VS Code Extensions
+
+1. **ES7+ React/Redux/React-Native snippets** - React snippets
+2. **Tailwind CSS IntelliSense** - Tailwind autocomplete
+3. **TypeScript Importer** - Auto imports
 4. **Prettier - Code formatter** - Code formatting
 5. **ESLint** - Code linting
-6. **Auto Rename Tag** - Automatically rename paired HTML tags
+6. **Auto Rename Tag** - HTML tag renaming
 
-## Available Scripts
+### Available Scripts
 
 ```bash
 # Start development server
 npm run dev
 
-# Build for production
+# Build for production  
 npm run build
 
 # Preview production build
@@ -80,77 +158,37 @@ npm run preview
 npm run lint
 ```
 
-## Project Structure
+### Project Structure
 
 ```
 src/
 ├── components/          # Reusable UI components
-│   ├── Layout/         # Header, Footer components
+│   ├── Layout/         # Header, Footer components  
 │   └── ui/             # Shadcn UI components
 ├── contexts/           # React contexts (Language, etc.)
 ├── hooks/              # Custom React hooks
+├── integrations/       # Supabase integration
 ├── lib/                # Utility functions
-├── pages/              # Main application pages
-├── App.tsx            # Main application component
-├── main.tsx           # Application entry point
-├── index.css          # Global styles and design tokens
-└── vite-env.d.ts      # TypeScript declarations
+├── pages/              # Application pages
+├── App.tsx            # Main app component
+├── main.tsx           # Entry point
+└── index.css          # Global styles
 ```
 
-## Features
+## 🔐 Authentication & Security
 
-- **Multilingual Support**: English, Sinhala, Tamil
-- **AI-Powered Features**: Chat assistant, price predictions, recommendations
-- **Responsive Design**: Mobile-first responsive design
-- **Modern UI**: Built with Tailwind CSS and Shadcn UI
-- **Type Safety**: Full TypeScript support
+- **Supabase Auth**: Email/password authentication
+- **Row Level Security (RLS)**: Database-level security policies  
+- **Role-based Access**: Different permissions per user type
+- **Email Verification**: Optional email confirmation
 
-## Development Tips
+## 🚀 Deployment
 
-1. **Hot Reload**: The development server supports hot reload - changes will be reflected instantly
-2. **TypeScript**: The project uses TypeScript for type safety
-3. **Tailwind CSS**: Use Tailwind classes for styling
-4. **Component Architecture**: Create reusable components in the `components/` directory
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Port already in use**: If port 8080 is busy, the dev server will automatically use the next available port
-2. **Dependencies not installing**: Try deleting `node_modules` and `package-lock.json`, then run `npm install` again
-3. **TypeScript errors**: Make sure all dependencies are installed and restart VS Code
-
-### VS Code Configuration
-
-Create a `.vscode/settings.json` file for project-specific settings:
-
-```json
-{
-  "typescript.preferences.importModuleSpecifier": "relative",
-  "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "tailwindCSS.experimental.classRegex": [
-    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
-  ]
-}
-```
-
-## Backend Integration
-
-This project includes a Supabase integration for backend functionality:
-- User authentication
-- Database management
-- Real-time features
-- File storage
-
-To enable backend features, connect to Supabase using the green Supabase button in the Lovable interface.
-
-## Deployment
-
-### Using Lovable
+### Using Lovable Platform (Recommended)
 
 1. Visit the [Lovable Project](https://lovable.dev/projects/81c623c6-d35c-4cef-8d16-584c63bd64fe)
 2. Click Share → Publish
+3. Optional: Connect custom domain in Project Settings
 
 ### Manual Deployment
 
@@ -158,42 +196,52 @@ To enable backend features, connect to Supabase using the green Supabase button 
 # Build the project
 npm run build
 
-# The dist/ folder contains the built application
-# Deploy the contents of dist/ to your hosting provider
+# Deploy the dist/ folder to your hosting provider
+# (Vercel, Netlify, etc.)
 ```
 
-**Edit a file directly in GitHub**
+## 🐛 Troubleshooting
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Common Issues
 
-**Use GitHub Codespaces**
+1. **Port conflicts**: Dev server will auto-select available port
+2. **Dependencies**: Delete `node_modules` and reinstall if issues occur
+3. **TypeScript errors**: Restart VS Code or run `npm run build`
+4. **Login issues**: Ensure admin account is created via registration form
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Database Issues
 
-## What technologies are used for this project?
+- Verify Supabase connection in integration settings
+- Check RLS policies if data access fails
+- Confirm user roles are set correctly
 
-This project is built with:
+## 🤝 Contributing
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)  
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request
 
-## How can I deploy this project?
+## 📝 Development Guidelines
 
-Simply open [Lovable](https://lovable.dev/projects/81c623c6-d35c-4cef-8d16-584c63bd64fe) and click on Share -> Publish.
+- Use TypeScript for type safety
+- Follow React best practices
+- Use Tailwind CSS for styling (avoid custom CSS)
+- Implement proper error handling
+- Test across different user roles
 
-## Can I connect a custom domain to my Lovable project?
+## 📄 License
 
-Yes, you can!
+This project is licensed under the MIT License.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 🙏 Acknowledgments
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- Supabase for backend infrastructure
+- Shadcn/ui for component library
+- Lucide React for icons
+- Sri Lankan farming community
+
+---
+
+**Made with ❤️ for Sri Lankan Agriculture**
