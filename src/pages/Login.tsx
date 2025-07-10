@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, Building } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,10 +7,15 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const Login = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -23,11 +28,59 @@ const Login = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent, userType: 'farmer' | 'buyer' | 'admin') => {
+  const handleSubmit = async (e: React.FormEvent, userType: 'farmer' | 'buyer' | 'admin') => {
     e.preventDefault();
-    // Here you would typically handle authentication
-    console.log('Login attempt:', { ...formData, userType });
-    // For demo purposes, we'll just log the attempt
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (error) {
+        toast({
+          title: "Login failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data.user) {
+        // Check user profile and redirect accordingly
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('user_type')
+          .eq('user_id', data.user.id)
+          .single();
+
+        if (profile?.user_type !== userType) {
+          toast({
+            title: "Access denied",
+            description: `This account is not registered as a ${userType}`,
+            variant: "destructive",
+          });
+          await supabase.auth.signOut();
+          return;
+        }
+
+        toast({
+          title: "Welcome back!",
+          description: `Successfully signed in as ${userType}`,
+        });
+
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      toast({
+        title: "Login failed",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -113,8 +166,8 @@ const Login = () => {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
-                    Sign In as Farmer
+                  <Button type="submit" disabled={loading} className="w-full bg-green-600 hover:bg-green-700">
+                    {loading ? 'Signing in...' : 'Sign In as Farmer'}
                   </Button>
                 </form>
               </CardContent>
@@ -177,8 +230,8 @@ const Login = () => {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-                    Sign In as Buyer
+                  <Button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700">
+                    {loading ? 'Signing in...' : 'Sign In as Buyer'}
                   </Button>
                 </form>
               </CardContent>
@@ -241,8 +294,8 @@ const Login = () => {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">
-                    Sign In as Admin
+                  <Button type="submit" disabled={loading} className="w-full bg-purple-600 hover:bg-purple-700">
+                    {loading ? 'Signing in...' : 'Sign In as Admin'}
                   </Button>
                 </form>
               </CardContent>
