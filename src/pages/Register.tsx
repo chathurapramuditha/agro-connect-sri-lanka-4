@@ -54,7 +54,7 @@ const Register = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent, userType: 'farmer' | 'buyer') => {
+  const handleSubmit = async (e: React.FormEvent, userType: 'farmer' | 'buyer' | 'admin') => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       alert('Passwords do not match!');
@@ -106,7 +106,7 @@ const Register = () => {
         </div>
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="farmer" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               {t('auth.farmer')}
@@ -114,6 +114,10 @@ const Register = () => {
             <TabsTrigger value="buyer" className="flex items-center gap-2">
               <Building className="h-4 w-4" />
               {t('auth.buyer')}
+            </TabsTrigger>
+            <TabsTrigger value="admin" className="flex items-center gap-2">
+              <Lock className="h-4 w-4" />
+              Admin
             </TabsTrigger>
           </TabsList>
 
@@ -492,6 +496,125 @@ const Register = () => {
 
                   <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
                     Create Buyer Account
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="admin">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Lock className="h-5 w-5 text-purple-600" />
+                  Register as Admin
+                </CardTitle>
+                <CardDescription>
+                  Create the system administrator account
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={(e) => handleSubmit(e, 'admin')} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="admin-name">Full Name *</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                      <Input
+                        id="admin-name"
+                        name="name"
+                        placeholder="System Administrator"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="admin-email">Email *</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                      <Input
+                        id="admin-email"
+                        name="email"
+                        type="email"
+                        placeholder="admin@agrolink.lk"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="admin-password">Password *</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                        <Input
+                          id="admin-password"
+                          name="password"
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="admin123"
+                          value={formData.password}
+                          onChange={handleInputChange}
+                          className="pl-10 pr-10"
+                          required
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="admin-confirm-password">Confirm Password *</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                        <Input
+                          id="admin-confirm-password"
+                          name="confirmPassword"
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="Confirm password"
+                          value={formData.confirmPassword}
+                          onChange={handleInputChange}
+                          className="pl-10"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="admin-terms" 
+                      name="agreeTerms"
+                      checked={formData.agreeTerms}
+                      onCheckedChange={(checked) => handleSelectChange('agreeTerms', checked.toString())}
+                      required 
+                    />
+                    <Label htmlFor="admin-terms" className="text-sm">
+                      I agree to the{' '}
+                      <Link to="/terms" className="text-primary hover:underline">
+                        Terms and Conditions
+                      </Link>{' '}
+                      and{' '}
+                      <Link to="/privacy" className="text-primary hover:underline">
+                        Privacy Policy
+                      </Link>
+                    </Label>
+                  </div>
+
+                  <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">
+                    Create Admin Account
                   </Button>
                 </form>
               </CardContent>
