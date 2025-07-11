@@ -1,19 +1,42 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Globe, User, ShoppingCart, MessageSquare } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, Globe, User, ShoppingCart, MessageSquare, LogOut, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage, Language } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const { language, setLanguage, t } = useLanguage();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check current user
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
+  };
 
   const navigation = [
     { name: t('nav.home'), href: '/' },
@@ -93,17 +116,40 @@ const Header = () => {
               </Link>
             </Button>
 
-            {/* Login/Register */}
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/login">
-                <User className="h-4 w-4 mr-2" />
-                {t('nav.login')}
-              </Link>
-            </Button>
-
-            <Button size="sm" asChild>
-              <Link to="/register">{t('nav.register')}</Link>
-            </Button>
+            {/* User Authentication */}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <User className="h-4 w-4" />
+                    <span className="text-sm">{user.email}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/login">
+                    <User className="h-4 w-4 mr-2" />
+                    {t('nav.login')}
+                  </Link>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link to="/register">{t('nav.register')}</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -160,18 +206,33 @@ const Header = () => {
                   </Link>
                 </Button>
                 
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/login" onClick={() => setIsMenuOpen(false)}>
-                    <User className="h-4 w-4 mr-2" />
-                    {t('nav.login')}
-                  </Link>
-                </Button>
-                
-                <Button size="sm" asChild>
-                  <Link to="/register" onClick={() => setIsMenuOpen(false)}>
-                    {t('nav.register')}
-                  </Link>
-                </Button>
+                {user ? (
+                  <>
+                    <Button variant="outline" size="sm" onClick={() => { navigate('/dashboard'); setIsMenuOpen(false); }}>
+                      <Settings className="h-4 w-4 mr-2" />
+                      Dashboard
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => { handleLogout(); setIsMenuOpen(false); }}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Logout
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to="/login" onClick={() => setIsMenuOpen(false)}>
+                        <User className="h-4 w-4 mr-2" />
+                        {t('nav.login')}
+                      </Link>
+                    </Button>
+                    
+                    <Button size="sm" asChild>
+                      <Link to="/register" onClick={() => setIsMenuOpen(false)}>
+                        {t('nav.register')}
+                      </Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
