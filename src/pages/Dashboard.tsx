@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
@@ -15,6 +15,7 @@ interface UserProfile {
 const Dashboard = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const getProfile = async () => {
@@ -76,15 +77,24 @@ const Dashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {profile.user_type === 'admin' && (
                   <>
-                    <div className="p-6 border rounded-lg">
+                    <div 
+                      className="p-6 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => navigate('/admin/users')}
+                    >
                       <h3 className="font-semibold mb-2">User Management</h3>
                       <p className="text-sm text-muted-foreground">Manage user accounts and permissions</p>
                     </div>
-                    <div className="p-6 border rounded-lg">
+                    <div 
+                      className="p-6 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => navigate('/admin/communications')}
+                    >
                       <h3 className="font-semibold mb-2">Communications</h3>
                       <p className="text-sm text-muted-foreground">Send emails and SMS to users</p>
                     </div>
-                    <div className="p-6 border rounded-lg">
+                    <div 
+                      className="p-6 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => navigate('/admin/blogs')}
+                    >
                       <h3 className="font-semibold mb-2">Content Management</h3>
                       <p className="text-sm text-muted-foreground">Moderate blog posts and content</p>
                     </div>

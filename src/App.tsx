@@ -14,6 +14,9 @@ import Register from "./pages/Register";
 import Blog from "./pages/Blog";
 import About from "./pages/About";
 import Dashboard from "./pages/Dashboard";
+import UserManagement from "./pages/admin/UserManagement";
+import Communications from "./pages/admin/Communications";
+import ContentManagement from "./pages/admin/ContentManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +40,9 @@ const App = () => (
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/admin/users" element={<UserManagement />} />
+                <Route path="/admin/communications" element={<Communications />} />
+                <Route path="/admin/blogs" element={<ContentManagement />} />
                 <Route path="/admin/*" element={<Dashboard />} />
                 <Route path="/farmer/*" element={<Dashboard />} />
                 <Route path="/buyer/*" element={<Dashboard />} />
