@@ -5,6 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import aiFarmingImage from '@/assets/ai-farming.jpg';
+import saltResistantImage from '@/assets/salt-resistant-farming.jpg';
+import farmingHealthImage from '@/assets/farming-health.jpg';
+import waterManagementImage from '@/assets/water-management.jpg';
 
 const BlogArticle = () => {
   const { id } = useParams();
@@ -22,6 +26,7 @@ const BlogArticle = () => {
       date: '2024-03-15',
       readTime: 5,
       tags: ['AI', 'Technology', 'Crops', 'Innovation'],
+      image: aiFarmingImage,
       content: `Artificial Intelligence is transforming agriculture in Sri Lanka, offering farmers unprecedented insights into crop management and yield optimization. Recent studies show that AI-powered recommendations can increase crop yields by up to 30% while reducing resource consumption.
 
 ## The Technology Behind the Revolution
@@ -113,6 +118,7 @@ The transformation is already underway, with early results showing tremendous pr
       date: '2024-05-20',
       readTime: 8,
       tags: ['Climate Change', 'Salinity', 'Coastal Agriculture', 'Innovation'],
+      image: saltResistantImage,
       content: `Two hours' drive south of Colombo lies Katukurunda, where an extraordinary agricultural experiment is taking place. What was once barren, salt-poisoned land is now producing healthy pumpkins, bitter gourds, and other vegetables thanks to an innovative pilot project led by the Special Task Force.
 
 ## The Challenge: Rising Salinity
@@ -271,6 +277,7 @@ The transformation of barren, salt-affected land into productive agricultural pl
       date: '2024-04-28',
       readTime: 12,
       tags: ['Health', 'CKD', 'Farming', 'Public Health'],
+      image: farmingHealthImage,
       content: `In the sleepy, verdant village of Ambagaswewa, in the Polonnaruwa district of Sri Lanka's North Central province, a silent health crisis is unfolding that has puzzled medical experts for over two decades. Here, chronic kidney disease of unknown etiology (CKDu) has become an epidemic, affecting thousands of farming families and challenging everything we thought we knew about kidney health.
 
 ## A Disease Without Obvious Cause
@@ -634,6 +641,7 @@ The fight against CKDu in Sri Lanka is not just a medical battle—it's a test o
       date: '2024-11-15',
       readTime: 10,
       tags: ['Budget', 'Policy', 'Investment', 'Economics'],
+      image: waterManagementImage,
       content: `As Sri Lanka prepares for Budget 2025, the agricultural sector stands at a critical crossroads. Public expenditure on agriculture has plummeted from 6.4% to just 2% of total government spending between 2014 and 2023, raising serious questions about the country's commitment to food security and rural development. This dramatic decline in investment comes at a time when the sector faces unprecedented challenges from climate change, market volatility, and post-pandemic recovery needs.
 
 ## The Declining Investment Trajectory
@@ -1292,6 +1300,15 @@ The path forward demands both immediate crisis response and long-term transforma
 
         {/* Article Header */}
         <div className="max-w-4xl mx-auto">
+          {/* Hero Image */}
+          <div className="mb-8 rounded-xl overflow-hidden">
+            <img 
+              src={article.image} 
+              alt={article.title}
+              className="w-full h-96 object-cover"
+            />
+          </div>
+          
           <div className="mb-8">
             <Badge variant="outline" className="mb-4">
               {article.category}

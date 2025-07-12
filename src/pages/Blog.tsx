@@ -6,6 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
+import aiFarmingImage from '@/assets/ai-farming.jpg';
+import saltResistantImage from '@/assets/salt-resistant-farming.jpg';
+import farmingHealthImage from '@/assets/farming-health.jpg';
+import waterManagementImage from '@/assets/water-management.jpg';
+import heroAgricultureImage from '@/assets/hero-agriculture.jpg';
 
 const Blog = () => {
   const { t, language } = useLanguage();
@@ -28,6 +33,7 @@ const Blog = () => {
       readTime: 5,
       featured: true,
       tags: ['AI', 'Technology', 'Crops', 'Innovation'],
+      image: aiFarmingImage,
       content: `Artificial Intelligence is transforming agriculture in Sri Lanka, offering farmers unprecedented insights into crop management and yield optimization. Recent studies show that AI-powered recommendations can increase crop yields by up to 30% while reducing resource consumption.
 
 The technology analyzes weather patterns, soil conditions, and historical data to provide precise planting schedules and crop selection advice. Farmers using these systems report significant improvements in both productivity and profitability.
@@ -54,6 +60,7 @@ The government has initiated several pilot programs to make this technology acce
       readTime: 8,
       featured: false,
       tags: ['Climate Change', 'Salinity', 'Coastal Agriculture', 'Innovation'],
+      image: saltResistantImage,
       content: `Increasing salinity is slowly swallowing traditional rice paddies along Sri Lanka's coastline, taking away the livelihood of generations of farmers. A Special Task Force has launched an innovative pilot project at Katukurunda to combat this growing threat.
 
 The project focuses on:
@@ -80,6 +87,7 @@ Early results show promising crop yields in areas previously considered barren, 
       readTime: 12,
       featured: false,
       tags: ['Health', 'CKD', 'Farming', 'Public Health'],
+      image: farmingHealthImage,
       content: `In the verdant village of Ambagaswewa, Polonnaruwa district, a health crisis is unfolding. Chronic kidney disease of unknown etiology (CKDu) affects thousands of farmers across Sri Lanka's North Central Province.
 
 The disease primarily impacts agricultural workers, with symptoms including:
@@ -114,7 +122,8 @@ This ongoing crisis highlights the urgent need for comprehensive health support 
       date: '2024-03-08',
       readTime: 6,
       featured: false,
-      tags: ['Water', 'Conservation', 'Irrigation', 'Techniques']
+      tags: ['Water', 'Conservation', 'Irrigation', 'Techniques'],
+      image: waterManagementImage
     }
   ];
 
@@ -197,10 +206,13 @@ This ongoing crisis highlights the urgent need for comprehensive health support 
                       </Link>
                     </Button>
                   </div>
-                  <div className="relative">
-                    <div className="aspect-video bg-gradient-to-br from-green-100 to-blue-100 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg flex items-center justify-center">
-                      <Brain className="h-16 w-16 text-green-600" />
-                    </div>
+                  <div className="relative overflow-hidden rounded-lg">
+                    <img 
+                      src={featuredPost.image} 
+                      alt={getPostTitle(featuredPost)}
+                      className="w-full h-72 object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
                   </div>
                 </div>
               </CardContent>
@@ -243,22 +255,24 @@ This ongoing crisis highlights the urgent need for comprehensive health support 
         {/* Blog Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredPosts.filter(post => !post.featured).map((post) => (
-            <Card key={post.id} className="group hover:shadow-lg transition-shadow duration-200">
-              <CardHeader>
-                <div className="aspect-video bg-gradient-to-br from-green-100 to-blue-100 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg mb-4 flex items-center justify-center">
-                  {post.category === 'AI & Technology' && <Brain className="h-12 w-12 text-blue-600" />}
-                  {post.category === 'Sustainability' && <Leaf className="h-12 w-12 text-green-600" />}
-                  {post.category === 'Market Analysis' && <TrendingUp className="h-12 w-12 text-purple-600" />}
-                  {post.category === 'Water Management' && <Cloud className="h-12 w-12 text-blue-600" />}
+            <Card key={post.id} className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+              <CardHeader className="p-0">
+                <div className="relative overflow-hidden rounded-t-lg">
+                  <img 
+                    src={post.image} 
+                    alt={getPostTitle(post)}
+                    className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                  <Badge variant="outline" className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm">
+                    {post.category}
+                  </Badge>
                 </div>
-                <Badge variant="outline" className="w-fit mb-2">
-                  {post.category}
-                </Badge>
-                <CardTitle className="group-hover:text-primary transition-colors">
+              </CardHeader>
+              <CardContent className="p-6">
+                <CardTitle className="group-hover:text-primary transition-colors mb-3">
                   {getPostTitle(post)}
                 </CardTitle>
-              </CardHeader>
-              <CardContent>
                 <CardDescription className="mb-4 text-base">
                   {getPostExcerpt(post)}
                 </CardDescription>
