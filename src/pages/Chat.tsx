@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +28,12 @@ interface Chat {
 }
 
 const Chat = () => {
+  const location = useLocation();
+  const { toast } = useToast();
+  
+  // Get farmer info from navigation state
+  const farmerData = location.state;
+  
   const [chats, setChats] = useState<Chat[]>([
     {
       id: '1',
@@ -47,6 +54,50 @@ const Chat = () => {
       avatar: '/placeholder.svg'
     }
   ]);
+
+  // Add farmer to chat list if coming from marketplace
+  useEffect(() => {
+    if (farmerData) {
+      const newFarmerChat: Chat = {
+        id: `farmer-${farmerData.productId}`,
+        participantName: farmerData.farmerName,
+        participantType: 'farmer',
+        lastMessage: `Interested in ${farmerData.productName}`,
+        timestamp: 'now',
+        unreadCount: 0,
+        avatar: '/placeholder.svg'
+      };
+
+      // Check if farmer chat already exists
+      setChats(prev => {
+        const exists = prev.find(chat => chat.id === newFarmerChat.id);
+        if (!exists) {
+          return [newFarmerChat, ...prev];
+        }
+        return prev;
+      });
+
+      // Auto-select the farmer chat
+      setSelectedChat(newFarmerChat.id);
+
+      // Add initial message
+      const initialMessage: ChatMessage = {
+        id: Date.now().toString(),
+        senderId: 'current-user',
+        senderName: 'You',
+        message: `Hi! I'm interested in your ${farmerData.productName}. Can you provide more details?`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isOwn: true
+      };
+
+      setMessages([initialMessage]);
+
+      toast({
+        title: "Chat Started",
+        description: `Started conversation with ${farmerData.farmerName}`,
+      });
+    }
+  }, [farmerData]);
 
   const [selectedChat, setSelectedChat] = useState<string | null>('1');
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -78,8 +129,6 @@ const Chat = () => {
 
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-
-  const { toast } = useToast();
 
   const sendMessage = () => {
     if (!newMessage.trim() || !selectedChat) return;
@@ -197,7 +246,24 @@ const Chat = () => {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        if (farmerData && selectedChat === `farmer-${farmerData.productId}`) {
+                          toast({
+                            title: "Farmer Contact",
+                            description: `${farmerData.farmerName}: ${farmerData.farmerPhone}`,
+                            duration: 5000,
+                          });
+                        } else {
+                          toast({
+                            title: "Contact",
+                            description: "Contact feature available for marketplace connections",
+                          });
+                        }
+                      }}
+                    >
                       <Phone className="h-4 w-4" />
                     </Button>
                     <Button variant="outline" size="sm">

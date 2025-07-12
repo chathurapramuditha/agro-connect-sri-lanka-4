@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
+import heroImage from '@/assets/hero-agriculture.jpg';
 
 const Home = () => {
   const { t } = useLanguage();
@@ -173,12 +174,18 @@ const Home = () => {
             </div>
 
             <div className="relative">
-              <div className="relative bg-gradient-to-br from-green-100 to-blue-100 dark:from-green-900/20 dark:to-blue-900/20 rounded-2xl p-8 shadow-2xl">
-                <div className="absolute -top-4 -right-4">
-                  <div className="bg-yellow-400 rounded-full p-3 shadow-lg">
-                    <Brain className="h-6 w-6 text-yellow-800" />
+              <div className="relative bg-gradient-to-br from-green-100 to-blue-100 dark:from-green-900/20 dark:to-blue-900/20 rounded-2xl overflow-hidden shadow-2xl">
+                <img 
+                  src={heroImage} 
+                  alt="Sri Lankan Agriculture"
+                  className="absolute inset-0 w-full h-full object-cover opacity-20"
+                />
+                <div className="relative p-8">
+                  <div className="absolute -top-4 -right-4">
+                    <div className="bg-yellow-400 rounded-full p-3 shadow-lg">
+                      <Brain className="h-6 w-6 text-yellow-800" />
+                    </div>
                   </div>
-                </div>
                 
                 <div className="space-y-6">
                   <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
@@ -209,6 +216,7 @@ const Home = () => {
                     <p className="text-sm text-muted-foreground">
                       "Perfect time for planting seasonal vegetables"
                     </p>
+                  </div>
                   </div>
                 </div>
               </div>

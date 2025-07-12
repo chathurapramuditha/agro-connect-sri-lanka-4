@@ -1,14 +1,23 @@
 import React, { useState } from 'react';
-import { Search, Filter, MapPin, Star, Phone, MessageCircle, Leaf, TrendingUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Filter, MapPin, Star, Phone, MessageCircle, Leaf, TrendingUp, ShoppingCart, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
+import productTomatoes from '@/assets/product-tomatoes.jpg';
+import productCoconuts from '@/assets/product-coconuts.jpg';
+import productRice from '@/assets/product-rice.jpg';
+import productGreenBeans from '@/assets/product-green-beans.jpg';
+import marketplaceHero from '@/assets/marketplace-hero.jpg';
 
 const Marketplace = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
@@ -25,9 +34,10 @@ const Marketplace = () => {
       unit: 'kg',
       quantity: '200 kg available',
       farmer: 'Sunil Perera',
+      farmerPhone: '+94 77 123 4567',
       location: 'Kandy',
       rating: 4.8,
-      image: '/placeholder.svg',
+      image: productTomatoes,
       description: 'Organic tomatoes grown without pesticides',
       aiScore: 95,
       priceChange: +12
@@ -42,9 +52,10 @@ const Marketplace = () => {
       unit: 'each',
       quantity: '500 pieces available',
       farmer: 'Kamala Silva',
+      farmerPhone: '+94 71 987 6543',
       location: 'Kurunegala',
       rating: 4.6,
-      image: '/placeholder.svg',
+      image: productCoconuts,
       description: 'Fresh coconuts harvested this morning',
       aiScore: 88,
       priceChange: -5
@@ -59,9 +70,10 @@ const Marketplace = () => {
       unit: 'kg',
       quantity: '1000 kg available',
       farmer: 'Ravi Kumara',
+      farmerPhone: '+94 76 555 1234',
       location: 'Polonnaruwa',
       rating: 4.9,
-      image: '/placeholder.svg',
+      image: productRice,
       description: 'Premium quality basmati rice',
       aiScore: 92,
       priceChange: +8
@@ -76,9 +88,10 @@ const Marketplace = () => {
       unit: 'kg',
       quantity: '150 kg available',
       farmer: 'Nimal Fernando',
+      farmerPhone: '+94 78 444 5678',
       location: 'Nuwara Eliya',
       rating: 4.7,
-      image: '/placeholder.svg',
+      image: productGreenBeans,
       description: 'Fresh green beans from hill country',
       aiScore: 90,
       priceChange: +3
@@ -109,15 +122,53 @@ const Marketplace = () => {
     }
   };
 
+  const handleChatWithFarmer = (product: any) => {
+    // Navigate to chat page with farmer info
+    navigate('/chat', { 
+      state: { 
+        farmerName: product.farmer,
+        farmerPhone: product.farmerPhone,
+        productName: getProductName(product),
+        productId: product.id
+      }
+    });
+  };
+
+  const handleContactFarmer = (product: any) => {
+    toast({
+      title: "Farmer Contact",
+      description: `${product.farmer}: ${product.farmerPhone}`,
+      duration: 5000,
+    });
+  };
+
+  const handleAddToCart = (product: any) => {
+    toast({
+      title: "Added to Cart",
+      description: `${getProductName(product)} has been added to your cart.`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">{t('marketplace.title')}</h1>
-          <p className="text-muted-foreground">
-            Discover fresh produce from verified Sri Lankan farmers
-          </p>
+        {/* Hero Section */}
+        <div className="mb-8 relative">
+          <div className="relative h-48 rounded-xl overflow-hidden mb-6">
+            <img 
+              src={marketplaceHero} 
+              alt="Sri Lankan Agriculture Marketplace"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+              <div className="text-center text-white">
+                <h1 className="text-4xl font-bold mb-2">{t('marketplace.title')}</h1>
+                <p className="text-xl">
+                  Discover fresh produce from verified Sri Lankan farmers
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Search and Filters */}
@@ -185,8 +236,12 @@ const Marketplace = () => {
             <Card key={product.id} className="group hover:shadow-lg transition-shadow duration-200">
               <CardHeader className="p-0">
                 <div className="relative">
-                  <div className="aspect-square bg-muted rounded-t-lg flex items-center justify-center">
-                    <Leaf className="h-12 w-12 text-muted-foreground" />
+                  <div className="aspect-square bg-muted rounded-t-lg overflow-hidden">
+                    <img 
+                      src={product.image} 
+                      alt={getProductName(product)}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    />
                   </div>
                   
                   {/* AI Score Badge */}
@@ -243,14 +298,31 @@ const Marketplace = () => {
 
               <CardFooter className="p-4 pt-0 space-y-2">
                 <div className="flex gap-2 w-full">
-                  <Button className="flex-1" size="sm">
+                  <Button 
+                    className="flex-1" 
+                    size="sm"
+                    onClick={() => handleContactFarmer(product)}
+                  >
                     <Phone className="h-4 w-4 mr-2" />
                     {t('common.contact')}
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleChatWithFarmer(product)}
+                  >
                     <MessageCircle className="h-4 w-4" />
                   </Button>
                 </div>
+                <Button 
+                  className="w-full" 
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => handleAddToCart(product)}
+                >
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Add to Cart
+                </Button>
               </CardFooter>
             </Card>
           ))}
