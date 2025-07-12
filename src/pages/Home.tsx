@@ -1,13 +1,93 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Users, TrendingUp, Brain, Smartphone, Globe, MessageSquare, BarChart3, Calendar, Leaf } from 'lucide-react';
+import { ArrowRight, Users, TrendingUp, Brain, Smartphone, Globe, MessageSquare, BarChart3, Calendar, Leaf, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const Home = () => {
   const { t } = useLanguage();
+  const [user, setUser] = useState(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Check authentication status
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+
+    getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Sample blog posts for slideshow
+  const blogPosts = [
+    {
+      id: 1,
+      title: "AI Crop Recommendations Transform Sri Lankan Agriculture",
+      excerpt: "Revolutionary AI technology helps farmers increase yields by 30% through smart crop selection and timing.",
+      category: "Technology",
+      author: "Dr. Priya Kumari",
+      date: "2024-03-15",
+      image: "🌱"
+    },
+    {
+      id: 2,
+      title: "Sustainable Farming Practices Combat Climate Change",
+      excerpt: "Eco-friendly methods that boost productivity while protecting the environment for future generations.",
+      category: "Sustainability", 
+      author: "Ravi Perera",
+      date: "2024-03-12",
+      image: "🌿"
+    },
+    {
+      id: 3,
+      title: "Market Analysis: Record Vegetable Prices in March 2024",
+      excerpt: "Comprehensive analysis reveals 25% price increase for key vegetables due to weather conditions.",
+      category: "Market Analysis",
+      author: "Sanduni Silva", 
+      date: "2024-03-10",
+      image: "📈"
+    },
+    {
+      id: 4,
+      title: "Water Conservation Techniques Save Farms During Drought",
+      excerpt: "Innovative irrigation methods help farmers maintain crops despite challenging dry season conditions.",
+      category: "Water Management",
+      author: "Thilak Fernando",
+      date: "2024-03-08", 
+      image: "💧"
+    }
+  ];
+
+  // Auto-advance slideshow
+  useEffect(() => {
+    if (user) {
+      const timer = setInterval(() => {
+        setCurrentSlide(prev => (prev + 1) % blogPosts.length);
+      }, 5000);
+
+      return () => clearInterval(timer);
+    }
+  }, [user, blogPosts.length]);
+
+  const nextSlide = () => {
+    setCurrentSlide(prev => (prev + 1) % blogPosts.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide(prev => (prev - 1 + blogPosts.length) % blogPosts.length);
+  };
 
   const features = [
     {
@@ -45,8 +125,10 @@ const Home = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-green-950/20 dark:via-blue-950/20 dark:to-purple-950/20">
+      {/* Conditional Hero/Blog Section */}
+      {!user ? (
+        // Original Hero Section for non-authenticated users
+        <section className="relative bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-green-950/20 dark:via-blue-950/20 dark:to-purple-950/20">
         <div className="container mx-auto px-4 py-20">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
@@ -134,6 +216,104 @@ const Home = () => {
           </div>
         </div>
       </section>
+      ) : (
+        // Blog Slideshow Section for authenticated users
+        <section className="relative bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-green-950/20 dark:via-blue-950/20 dark:to-purple-950/20">
+          <div className="container mx-auto px-4 py-20">
+            <div className="mb-8 text-center">
+              <Badge variant="secondary" className="mb-4">
+                🌾 Latest Agricultural Insights
+              </Badge>
+              <h2 className="text-3xl lg:text-4xl font-bold mb-4">
+                Stay Updated with Farming News
+              </h2>
+              <p className="text-xl text-muted-foreground">
+                Discover the latest trends, tips, and insights from the agricultural world
+              </p>
+            </div>
+
+            <div className="relative">
+              <Card className="overflow-hidden bg-white dark:bg-gray-800 shadow-2xl">
+                <CardContent className="p-0">
+                  <div className="grid lg:grid-cols-2 gap-0">
+                    <div className="p-8 lg:p-12 flex flex-col justify-center">
+                      <Badge variant="outline" className="w-fit mb-4">
+                        {blogPosts[currentSlide].category}
+                      </Badge>
+                      <h3 className="text-2xl lg:text-3xl font-bold mb-4 leading-tight">
+                        {blogPosts[currentSlide].title}
+                      </h3>
+                      <p className="text-lg text-muted-foreground mb-6">
+                        {blogPosts[currentSlide].excerpt}
+                      </p>
+                      <div className="flex items-center gap-4 mb-6 text-sm text-muted-foreground">
+                        <span>{blogPosts[currentSlide].author}</span>
+                        <span>•</span>
+                        <span>{new Date(blogPosts[currentSlide].date).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex gap-4">
+                        <Button asChild className="gap-2">
+                          <Link to={`/blog/article/${blogPosts[currentSlide].id}`}>
+                            Read Full Article
+                            <ArrowRight className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                        <Button variant="outline" asChild>
+                          <Link to="/blog">
+                            View All Articles
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="relative bg-gradient-to-br from-green-100 to-blue-100 dark:from-green-900/20 dark:to-blue-900/20 flex items-center justify-center min-h-[300px] lg:min-h-[400px]">
+                      <div className="text-8xl animate-pulse">
+                        {blogPosts[currentSlide].image}
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Navigation Controls */}
+              <div className="flex items-center justify-between absolute top-1/2 -translate-y-1/2 w-full px-4">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={prevSlide}
+                  className="bg-white/90 backdrop-blur-sm border-white/20 shadow-lg hover:bg-white"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={nextSlide}
+                  className="bg-white/90 backdrop-blur-sm border-white/20 shadow-lg hover:bg-white"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Slide Indicators */}
+              <div className="flex justify-center gap-2 mt-6">
+                {blogPosts.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentSlide(index)}
+                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                      index === currentSlide 
+                        ? 'bg-primary scale-110' 
+                        : 'bg-gray-300 hover:bg-gray-400'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Features Section */}
       <section className="py-20 bg-background">

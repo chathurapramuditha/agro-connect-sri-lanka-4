@@ -40,7 +40,8 @@ const App = () => (
                 <Route path="/ai-chat" element={<AIChat />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                <Route path="/blog" element={<Blog />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/article/:id" element={<BlogArticle />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/admin/users" element={<UserManagement />} />
