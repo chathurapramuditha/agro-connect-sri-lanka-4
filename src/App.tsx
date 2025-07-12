@@ -12,6 +12,7 @@ import AIChat from "./pages/AIChat";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Blog from "./pages/Blog";
+import BlogArticle from "./pages/BlogArticle";
 import About from "./pages/About";
 import Dashboard from "./pages/Dashboard";
 import UserManagement from "./pages/admin/UserManagement";
