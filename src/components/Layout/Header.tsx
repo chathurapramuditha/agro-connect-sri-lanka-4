@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Globe, User, ShoppingCart, MessageSquare, LogOut, Settings } from 'lucide-react';
+import { Menu, X, Globe, User, ShoppingCart, MessageSquare, LogOut, Settings, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage, Language } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -108,6 +108,30 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* Navigation Buttons */}
+            {user && (
+              <>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/notifications">
+                    <Bell className="h-4 w-4 mr-2" />
+                    Notifications
+                  </Link>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/chat">
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Chat
+                  </Link>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/cart">
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Cart
+                  </Link>
+                </Button>
+              </>
+            )}
+
             {/* AI Chat Button */}
             <Button variant="outline" size="sm" asChild>
               <Link to="/ai-chat">
@@ -199,6 +223,29 @@ const Header = () => {
 
               {/* Mobile Actions */}
               <div className="flex flex-col space-y-2 px-2">
+                {user && (
+                  <>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to="/notifications" onClick={() => setIsMenuOpen(false)}>
+                        <Bell className="h-4 w-4 mr-2" />
+                        Notifications
+                      </Link>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to="/chat" onClick={() => setIsMenuOpen(false)}>
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Chat
+                      </Link>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to="/cart" onClick={() => setIsMenuOpen(false)}>
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        Cart
+                      </Link>
+                    </Button>
+                  </>
+                )}
+                
                 <Button variant="outline" size="sm" asChild>
                   <Link to="/ai-chat" onClick={() => setIsMenuOpen(false)}>
                     <MessageSquare className="h-4 w-4 mr-2" />

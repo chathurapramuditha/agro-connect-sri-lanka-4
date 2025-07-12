@@ -20,7 +20,9 @@ const Communications = () => {
   
   const [smsData, setSmsData] = useState({
     recipient: '',
-    message: ''
+    message: '',
+    countryCode: '+94',
+    phoneNumber: ''
   });
 
   const [userProfiles, setUserProfiles] = useState<any[]>([]);
@@ -89,7 +91,7 @@ const Communications = () => {
       description: `SMS sent to ${smsData.recipient}`,
     });
 
-    setSmsData({ recipient: '', message: '' });
+    setSmsData({ recipient: '', message: '', countryCode: '+94', phoneNumber: '' });
   };
 
   return (
@@ -208,7 +210,7 @@ const Communications = () => {
                 {smsData.recipient === 'custom' && (
                   <div className="space-y-2">
                     <div className="flex gap-2">
-                      <Select defaultValue="+94">
+                      <Select defaultValue="+94" onValueChange={(value) => setSmsData({ ...smsData, countryCode: value })}>
                         <SelectTrigger className="w-24">
                           <SelectValue />
                         </SelectTrigger>
@@ -221,9 +223,11 @@ const Communications = () => {
                         </SelectContent>
                       </Select>
                       <Input
-                        placeholder="Enter phone number (without country code)"
+                        type="tel"
+                        placeholder="Enter phone number"
                         className="flex-1"
-                        onChange={(e) => setSmsData({ ...smsData, recipient: e.target.value })}
+                        value={smsData.phoneNumber || ''}
+                        onChange={(e) => setSmsData({ ...smsData, phoneNumber: e.target.value })}
                       />
                     </div>
                   </div>

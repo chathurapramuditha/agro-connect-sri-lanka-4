@@ -17,6 +17,9 @@ import Dashboard from "./pages/Dashboard";
 import UserManagement from "./pages/admin/UserManagement";
 import Communications from "./pages/admin/Communications";
 import ContentManagement from "./pages/admin/ContentManagement";
+import Notifications from "./pages/Notifications";
+import Chat from "./pages/Chat";
+import Cart from "./pages/Cart";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +46,9 @@ const App = () => (
                 <Route path="/admin/users" element={<UserManagement />} />
                 <Route path="/admin/communications" element={<Communications />} />
                 <Route path="/admin/blogs" element={<ContentManagement />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/chat" element={<Chat />} />
+                <Route path="/cart" element={<Cart />} />
                 <Route path="/admin/*" element={<Dashboard />} />
                 <Route path="/farmer/*" element={<Dashboard />} />
                 <Route path="/buyer/*" element={<Dashboard />} />
