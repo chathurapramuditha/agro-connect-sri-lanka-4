@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, UserCheck, UserX, Shield } from 'lucide-react';
+import { Users, UserCheck, UserX, Shield, Trash2, UserMinus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface UserProfile {
@@ -71,6 +71,69 @@ const UserManagement = () => {
       toast({
         title: "Error",
         description: "Failed to update user verification",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deactivateUser = async (userId: string) => {
+    try {
+      // In a real app, you might want to add a deactivated flag instead of deleting
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_verified: false })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      setUsers(users.map(user => 
+        user.id === userId 
+          ? { ...user, is_verified: false }
+          : user
+      ));
+
+      toast({
+        title: "Success",
+        description: "User account deactivated successfully",
+      });
+    } catch (error) {
+      console.error('Error deactivating user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to deactivate user account",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteUser = async (userId: string, userAuthId: string) => {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      // First delete the profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (profileError) throw profileError;
+
+      // Note: In a real app, you might need to use the Auth Admin API to delete the auth user
+      // For now, we'll just remove from the profiles table
+      
+      setUsers(users.filter(user => user.id !== userId));
+
+      toast({
+        title: "Success",
+        description: "User account deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete user account",
         variant: "destructive",
       });
     }
@@ -164,6 +227,26 @@ const UserManagement = () => {
                       Verify
                     </>
                   )}
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => deactivateUser(user.id)}
+                  className="flex items-center gap-2"
+                >
+                  <UserMinus className="h-4 w-4" />
+                  Deactivate
+                </Button>
+                
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => deleteUser(user.id, user.user_id)}
+                  className="flex items-center gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
                 </Button>
               </div>
             </CardContent>

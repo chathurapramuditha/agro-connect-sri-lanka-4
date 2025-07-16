@@ -19,6 +19,11 @@ import Dashboard from "./pages/Dashboard";
 import UserManagement from "./pages/admin/UserManagement";
 import Communications from "./pages/admin/Communications";
 import ContentManagement from "./pages/admin/ContentManagement";
+import Analytics from "./pages/admin/Analytics";
+import Settings from "./pages/admin/Settings";
+import FarmerProducts from "./pages/farmer/Products";
+import FarmerOrders from "./pages/farmer/Orders";
+import BuyerOrders from "./pages/buyer/Orders";
 import Notifications from "./pages/Notifications";
 import Chat from "./pages/Chat";
 import Cart from "./pages/Cart";
@@ -50,6 +55,11 @@ const App = () => (
                 <Route path="/admin/users" element={<UserManagement />} />
                 <Route path="/admin/communications" element={<Communications />} />
                 <Route path="/admin/blogs" element={<ContentManagement />} />
+                <Route path="/admin/analytics" element={<Analytics />} />
+                <Route path="/admin/settings" element={<Settings />} />
+                <Route path="/farmer/products" element={<FarmerProducts />} />
+                <Route path="/farmer/orders" element={<FarmerOrders />} />
+                <Route path="/buyer/orders" element={<BuyerOrders />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/chat" element={<Chat />} />
                 <Route path="/cart" element={<Cart />} />
