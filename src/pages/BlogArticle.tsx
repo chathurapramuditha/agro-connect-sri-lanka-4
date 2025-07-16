@@ -1432,44 +1432,39 @@ The path forward demands both immediate crisis response and long-term transforma
               if (paragraph.startsWith('##')) {
                 return (
                   <h2 key={index} className="text-2xl font-bold mt-8 mb-4">
-                    {paragraph.replace('##', '').trim()}
+                    {paragraph.replace(/^##\s+/, '').trim()}
                   </h2>
                 );
               } else if (paragraph.startsWith('###')) {
                 return (
                   <h3 key={index} className="text-xl font-semibold mt-6 mb-3">
-                    {paragraph.replace('###', '').trim()}
+                    {paragraph.replace(/^###\s+/, '').trim()}
                   </h3>
                 );
               } else if (paragraph.startsWith('####')) {
                 return (
                   <h4 key={index} className="text-lg font-semibold mt-4 mb-2">
-                    {paragraph.replace('####', '').trim()}
+                    {paragraph.replace(/^####\s+/, '').trim()}
                   </h4>
                 );
               } else if (paragraph.startsWith('- ')) {
                 // Handle bullet points
-                const bullets = paragraph.split('\n').filter(line => line.startsWith('- '));
+                const bullets = paragraph.split('\n').filter(line => line.trim().startsWith('- '));
                 return (
                   <ul key={index} className="list-disc list-inside mb-4 space-y-1">
                     {bullets.map((bullet, bulletIndex) => (
-                      <li key={bulletIndex}>{bullet.replace('- ', '')}</li>
+                      <li key={bulletIndex}>{bullet.replace(/^-\s+/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>')}</li>
                     ))}
                   </ul>
                 );
               } else if (paragraph.includes('**')) {
-                // Handle bold text
-                const parts = paragraph.split('**');
+                // Handle bold text and other formatting
+                let formattedText = paragraph
+                  .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                  .replace(/\*(.*?)\*/g, '<em>$1</em>');
+                
                 return (
-                  <p key={index} className="mb-4 leading-relaxed">
-                    {parts.map((part, partIndex) => 
-                      partIndex % 2 === 1 ? (
-                        <strong key={partIndex}>{part}</strong>
-                      ) : (
-                        part
-                      )
-                    )}
-                  </p>
+                  <p key={index} className="mb-4 leading-relaxed" dangerouslySetInnerHTML={{ __html: formattedText }} />
                 );
               } else if (paragraph.trim() === '---') {
                 return <Separator key={index} className="my-8" />;
@@ -1480,10 +1475,13 @@ The path forward demands both immediate crisis response and long-term transforma
                   </p>
                 );
               } else if (paragraph.trim()) {
+                // Clean any remaining markdown symbols
+                const cleanText = paragraph
+                  .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                  .replace(/\*(.*?)\*/g, '<em>$1</em>');
+                
                 return (
-                  <p key={index} className="mb-4 leading-relaxed">
-                    {paragraph}
-                  </p>
+                  <p key={index} className="mb-4 leading-relaxed" dangerouslySetInnerHTML={{ __html: cleanText }} />
                 );
               }
               return null;
