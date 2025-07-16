@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Eye, EyeOff, Mail, Lock, User, Building, Phone, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,11 +11,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { toast } from 'sonner';
 
 const Register = () => {
   const { t } = useLanguage();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const defaultTab = searchParams.get('type') || 'farmer';
+  const [loading, setLoading] = useState(false);
   
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -57,20 +60,21 @@ const Register = () => {
   const handleSubmit = async (e: React.FormEvent, userType: 'farmer' | 'buyer' | 'admin') => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
+      toast.error('Passwords do not match!');
       return;
     }
     if (!formData.agreeTerms) {
-      alert('Please agree to the terms and conditions');
+      toast.error('Please agree to the terms and conditions');
       return;
     }
 
+    setLoading(true);
     try {
+      // Create user with autoconfirm (no email verification needed)
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
             full_name: formData.name,
             user_type: userType,
@@ -82,15 +86,25 @@ const Register = () => {
       });
 
       if (error) {
-        alert(error.message);
+        toast.error(error.message);
         return;
       }
 
       if (data.user) {
-        alert('Registration successful! Please check your email to verify your account.');
+        // If user is created and confirmed, automatically sign them in
+        if (data.user.email_confirmed_at || data.session) {
+          toast.success(`Welcome to AgroLink! Registration successful as ${userType}.`);
+          navigate('/dashboard');
+        } else {
+          // For cases where email confirmation is still required
+          toast.success('Registration successful! You can now log in.');
+          navigate('/login');
+        }
       }
     } catch (error: any) {
-      alert('Registration failed: ' + error.message);
+      toast.error('Registration failed: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -309,8 +323,8 @@ const Register = () => {
                     </Label>
                   </div>
 
-                  <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
-                    Create Farmer Account
+                  <Button type="submit" disabled={loading} className="w-full bg-green-600 hover:bg-green-700">
+                    {loading ? 'Creating Account...' : 'Create Farmer Account'}
                   </Button>
                 </form>
               </CardContent>
@@ -494,8 +508,8 @@ const Register = () => {
                     </Label>
                   </div>
 
-                  <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-                    Create Buyer Account
+                  <Button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700">
+                    {loading ? 'Creating Account...' : 'Create Buyer Account'}
                   </Button>
                 </form>
               </CardContent>
