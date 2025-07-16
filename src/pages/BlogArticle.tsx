@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calendar, User, Clock, Share2, Bookmark, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Calendar, User, Clock, Share2, Bookmark, ChevronRight, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
 import aiFarmingImage from '@/assets/ai-farming.jpg';
 import saltResistantImage from '@/assets/salt-resistant-farming.jpg';
 import farmingHealthImage from '@/assets/farming-health.jpg';
@@ -14,6 +15,8 @@ const BlogArticle = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [article, setArticle] = useState(null);
+  const [isSaved, setIsSaved] = useState(false);
+  const { toast } = useToast();
 
   // This would normally come from an API or blog data service
   const articleData = {
@@ -1265,11 +1268,73 @@ The path forward demands both immediate crisis response and long-term transforma
   useEffect(() => {
     if (id && articleData[id]) {
       setArticle(articleData[id]);
+      // Check if article is saved
+      const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
+      setIsSaved(savedArticles.includes(id));
     } else {
       // Article not found, redirect to blog
       navigate('/blog');
     }
   }, [id, navigate]);
+
+  const handleShare = async () => {
+    if (!article) return;
+    
+    const shareData = {
+      title: article.title,
+      text: article.excerpt,
+      url: window.location.href
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        toast({
+          title: "Article shared successfully!",
+          description: "Thank you for sharing this article."
+        });
+      } else {
+        // Fallback: Copy to clipboard
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: "Link copied to clipboard!",
+          description: "You can now paste and share this link."
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Share failed",
+        description: "Could not share the article. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSave = () => {
+    if (!article) return;
+    
+    const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
+    
+    if (isSaved) {
+      // Remove from saved
+      const updated = savedArticles.filter(articleId => articleId !== id);
+      localStorage.setItem('savedArticles', JSON.stringify(updated));
+      setIsSaved(false);
+      toast({
+        title: "Article removed from saved",
+        description: "The article has been removed from your saved articles."
+      });
+    } else {
+      // Add to saved
+      savedArticles.push(id);
+      localStorage.setItem('savedArticles', JSON.stringify(savedArticles));
+      setIsSaved(true);
+      toast({
+        title: "Article saved!",
+        description: "The article has been saved to your reading list."
+      });
+    }
+  };
 
   if (!article) {
     return (
@@ -1347,13 +1412,13 @@ The path forward demands both immediate crisis response and long-term transforma
 
             {/* Share Actions */}
             <div className="flex gap-2 mb-8">
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button variant="outline" size="sm" className="gap-2" onClick={handleShare}>
                 <Share2 className="h-4 w-4" />
                 Share
               </Button>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Bookmark className="h-4 w-4" />
-                Save
+              <Button variant="outline" size="sm" className="gap-2" onClick={handleSave}>
+                {isSaved ? <Check className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+                {isSaved ? 'Saved' : 'Save'}
               </Button>
             </div>
           </div>

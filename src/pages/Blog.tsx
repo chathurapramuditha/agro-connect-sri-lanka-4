@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { cleanMarkdown } from '@/lib/markdown';
 import aiFarmingImage from '@/assets/ai-farming.jpg';
 import saltResistantImage from '@/assets/salt-resistant-farming.jpg';
 import farmingHealthImage from '@/assets/farming-health.jpg';
@@ -144,11 +145,13 @@ This ongoing crisis highlights the urgent need for comprehensive health support 
   };
 
   const getPostExcerpt = (post: any) => {
+    let excerpt;
     switch (language) {
-      case 'si': return post.excerptSi;
-      case 'ta': return post.excerptTa;
-      default: return post.excerpt;
+      case 'si': excerpt = post.excerptSi || post.excerpt; break;
+      case 'ta': excerpt = post.excerptTa || post.excerpt; break;
+      default: excerpt = post.excerpt; break;
     }
+    return cleanMarkdown(excerpt);
   };
 
   const filteredPosts = blogPosts.filter(post => {
