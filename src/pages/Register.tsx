@@ -70,7 +70,7 @@ const Register = () => {
 
     setLoading(true);
     try {
-      // Create user with autoconfirm (no email verification needed)
+      // First, sign up the user
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -90,16 +90,21 @@ const Register = () => {
         return;
       }
 
-      if (data.user) {
-        // If user is created and confirmed, automatically sign them in
-        if (data.user.email_confirmed_at || data.session) {
-          toast.success(`Welcome to AgroLink! Registration successful as ${userType}.`);
-          navigate('/dashboard');
-        } else {
-          // For cases where email confirmation is still required
-          toast.success('Registration successful! You can now log in.');
-          navigate('/login');
-        }
+      // If signup successful, immediately sign in the user
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (signInError) {
+        toast.error('Registration successful but login failed: ' + signInError.message);
+        navigate('/login');
+        return;
+      }
+
+      if (signInData.user) {
+        toast.success(`Welcome to AgroLink! Registration successful as ${userType}.`);
+        navigate('/dashboard');
       }
     } catch (error: any) {
       toast.error('Registration failed: ' + error.message);
