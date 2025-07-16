@@ -102,15 +102,24 @@ const Dashboard = () => {
                 )}
                 {profile.user_type === 'farmer' && (
                   <>
-                    <div className="p-6 border rounded-lg">
+                    <div 
+                      className="p-6 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => navigate('/farmer/products')}
+                    >
                       <h3 className="font-semibold mb-2">My Products</h3>
                       <p className="text-sm text-muted-foreground">Manage your farm products</p>
                     </div>
-                    <div className="p-6 border rounded-lg">
+                    <div 
+                      className="p-6 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => navigate('/farmer/orders')}
+                    >
                       <h3 className="font-semibold mb-2">Orders</h3>
                       <p className="text-sm text-muted-foreground">View and manage incoming orders</p>
                     </div>
-                    <div className="p-6 border rounded-lg">
+                    <div 
+                      className="p-6 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => navigate('/farmer/blogs')}
+                    >
                       <h3 className="font-semibold mb-2">Blog Posts</h3>
                       <p className="text-sm text-muted-foreground">Share farming insights</p>
                     </div>
@@ -118,15 +127,24 @@ const Dashboard = () => {
                 )}
                 {profile.user_type === 'buyer' && (
                   <>
-                    <div className="p-6 border rounded-lg">
+                    <div 
+                      className="p-6 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => navigate('/marketplace')}
+                    >
                       <h3 className="font-semibold mb-2">Marketplace</h3>
                       <p className="text-sm text-muted-foreground">Browse and buy fresh produce</p>
                     </div>
-                    <div className="p-6 border rounded-lg">
+                    <div 
+                      className="p-6 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => navigate('/buyer/orders')}
+                    >
                       <h3 className="font-semibold mb-2">My Orders</h3>
                       <p className="text-sm text-muted-foreground">Track your purchases</p>
                     </div>
-                    <div className="p-6 border rounded-lg">
+                    <div 
+                      className="p-6 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => navigate('/buyer/blogs')}
+                    >
                       <h3 className="font-semibold mb-2">Blog Posts</h3>
                       <p className="text-sm text-muted-foreground">Share your experiences</p>
                     </div>

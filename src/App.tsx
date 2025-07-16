@@ -23,7 +23,12 @@ import Analytics from "./pages/admin/Analytics";
 import Settings from "./pages/admin/Settings";
 import FarmerProducts from "./pages/farmer/Products";
 import FarmerOrders from "./pages/farmer/Orders";
+import FarmerBlogs from "./pages/farmer/Blogs";
+import FarmerBlogCreate from "./pages/farmer/BlogCreate";
+import FarmerProductAdd from "./pages/farmer/ProductAdd";
 import BuyerOrders from "./pages/buyer/Orders";
+import BuyerBlogs from "./pages/buyer/Blogs";
+import BuyerBlogCreate from "./pages/buyer/BlogCreate";
 import Notifications from "./pages/Notifications";
 import Chat from "./pages/Chat";
 import Cart from "./pages/Cart";
@@ -58,8 +63,13 @@ const App = () => (
                 <Route path="/admin/analytics" element={<Analytics />} />
                 <Route path="/admin/settings" element={<Settings />} />
                 <Route path="/farmer/products" element={<FarmerProducts />} />
+                <Route path="/farmer/products/add" element={<FarmerProductAdd />} />
                 <Route path="/farmer/orders" element={<FarmerOrders />} />
+                <Route path="/farmer/blogs" element={<FarmerBlogs />} />
+                <Route path="/farmer/blogs/create" element={<FarmerBlogCreate />} />
                 <Route path="/buyer/orders" element={<BuyerOrders />} />
+                <Route path="/buyer/blogs" element={<BuyerBlogs />} />
+                <Route path="/buyer/blogs/create" element={<BuyerBlogCreate />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/chat" element={<Chat />} />
                 <Route path="/cart" element={<Cart />} />
