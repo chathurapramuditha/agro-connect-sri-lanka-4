@@ -7,22 +7,27 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, Send, Search, Phone, Video } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ChatMessage {
   id: string;
-  senderId: string;
-  senderName: string;
-  message: string;
-  timestamp: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  created_at: string;
+  is_read: boolean;
   isOwn: boolean;
+  senderName: string;
 }
 
-interface Chat {
+interface Conversation {
   id: string;
+  participant_1_id: string;
+  participant_2_id: string;
+  last_message?: string;
+  updated_at: string;
   participantName: string;
   participantType: 'farmer' | 'buyer';
-  lastMessage: string;
-  timestamp: string;
   unreadCount: number;
   avatar?: string;
 }
@@ -34,123 +39,303 @@ const Chat = () => {
   // Get farmer info from navigation state
   const farmerData = location.state;
   
-  const [chats, setChats] = useState<Chat[]>([
-    {
-      id: '1',
-      participantName: 'John Farmer',
-      participantType: 'farmer',
-      lastMessage: 'I have fresh tomatoes available',
-      timestamp: '2 min ago',
-      unreadCount: 2,
-      avatar: '/placeholder.svg'
-    },
-    {
-      id: '2',
-      participantName: 'Sarah Buyer',
-      participantType: 'buyer',
-      lastMessage: 'When can you deliver the carrots?',
-      timestamp: '1 hour ago',
-      unreadCount: 0,
-      avatar: '/placeholder.svg'
-    }
-  ]);
-
-  // Add farmer to chat list if coming from marketplace
-  useEffect(() => {
-    if (farmerData) {
-      const newFarmerChat: Chat = {
-        id: `farmer-${farmerData.productId}`,
-        participantName: farmerData.farmerName,
-        participantType: 'farmer',
-        lastMessage: `Interested in ${farmerData.productName}`,
-        timestamp: 'now',
-        unreadCount: 0,
-        avatar: '/placeholder.svg'
-      };
-
-      // Check if farmer chat already exists
-      setChats(prev => {
-        const exists = prev.find(chat => chat.id === newFarmerChat.id);
-        if (!exists) {
-          return [newFarmerChat, ...prev];
-        }
-        return prev;
-      });
-
-      // Auto-select the farmer chat
-      setSelectedChat(newFarmerChat.id);
-
-      // Add initial message
-      const initialMessage: ChatMessage = {
-        id: Date.now().toString(),
-        senderId: 'current-user',
-        senderName: 'You',
-        message: `Hi! I'm interested in your ${farmerData.productName}. Can you provide more details?`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        isOwn: true
-      };
-
-      setMessages([initialMessage]);
-
-      toast({
-        title: "Chat Started",
-        description: `Started conversation with ${farmerData.farmerName}`,
-      });
-    }
-  }, [farmerData]);
-
-  const [selectedChat, setSelectedChat] = useState<string | null>('1');
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      senderId: '1',
-      senderName: 'John Farmer',
-      message: 'Hello! I have fresh organic tomatoes available for sale. Would you be interested?',
-      timestamp: '10:30 AM',
-      isOwn: false
-    },
-    {
-      id: '2',
-      senderId: 'current-user',
-      senderName: 'You',
-      message: 'Yes, I\'m interested. What\'s the price per kg?',
-      timestamp: '10:32 AM',
-      isOwn: true
-    },
-    {
-      id: '3',
-      senderId: '1',
-      senderName: 'John Farmer',
-      message: 'Rs. 120 per kg. They are freshly harvested this morning. I can deliver today if you need.',
-      timestamp: '10:35 AM',
-      isOwn: false
-    }
-  ]);
-
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const sendMessage = () => {
-    if (!newMessage.trim() || !selectedChat) return;
+  // Check authentication
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUser(user);
+      } else {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to access messages",
+          variant: "destructive",
+        });
+      }
+      setLoading(false);
+    };
+    getUser();
+  }, []);
 
-    const message: ChatMessage = {
-      id: Date.now().toString(),
-      senderId: 'current-user',
-      senderName: 'You',
-      message: newMessage,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isOwn: true
+  // Load conversations
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const loadConversations = async () => {
+      // Get user's profile first
+      const { data: userProfile, error: userError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', currentUser.id)
+        .single();
+
+      if (userError || !userProfile) {
+        console.error('Error loading user profile:', userError);
+        return;
+      }
+
+      const { data: conversations, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .or(`participant_1_id.eq.${userProfile.id},participant_2_id.eq.${userProfile.id}`)
+        .order('updated_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading conversations:', error);
+        return;
+      }
+
+      const formattedConversations: Conversation[] = [];
+      
+      for (const conv of conversations) {
+        const isParticipant1 = conv.participant_1_id === userProfile.id;
+        const otherParticipantId = isParticipant1 ? conv.participant_2_id : conv.participant_1_id;
+        
+        // Get other participant's profile
+        const { data: otherProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('full_name, user_type, avatar_url')
+          .eq('id', otherParticipantId)
+          .single();
+
+        if (profileError || !otherProfile) {
+          console.error('Error loading participant profile:', profileError);
+          continue;
+        }
+
+        formattedConversations.push({
+          id: conv.id,
+          participant_1_id: conv.participant_1_id,
+          participant_2_id: conv.participant_2_id,
+          last_message: 'No messages yet',
+          updated_at: conv.updated_at,
+          participantName: otherProfile.full_name,
+          participantType: otherProfile.user_type as 'farmer' | 'buyer',
+          unreadCount: 0,
+          avatar: otherProfile.avatar_url
+        });
+      }
+
+      setConversations(formattedConversations);
     };
 
-    setMessages(prev => [...prev, message]);
-    setNewMessage('');
+    loadConversations();
+  }, [currentUser]);
 
-    // Update last message in chat list
-    setChats(prev => prev.map(chat => 
-      chat.id === selectedChat 
-        ? { ...chat, lastMessage: newMessage, timestamp: 'now' }
-        : chat
-    ));
+  // Handle farmer data from marketplace
+  useEffect(() => {
+    if (farmerData && currentUser) {
+      const createOrFindConversation = async () => {
+        // First, get the farmer's profile by product
+        const { data: product, error: productError } = await supabase
+          .from('products')
+          .select('farmer_id, profiles!products_farmer_id_fkey(id, full_name, user_type, phone_number)')
+          .eq('id', farmerData.productId)
+          .single();
+
+        if (productError || !product) {
+          console.error('Error finding product:', productError);
+          return;
+        }
+
+        const farmerId = product.farmer_id;
+        
+        // Check if conversation already exists
+        const { data: existingConv, error: convError } = await supabase
+          .from('conversations')
+          .select('*')
+          .or(`and(participant_1_id.eq.${currentUser.id},participant_2_id.eq.${farmerId}),and(participant_1_id.eq.${farmerId},participant_2_id.eq.${currentUser.id})`)
+          .single();
+
+        let conversationId;
+
+        if (existingConv) {
+          conversationId = existingConv.id;
+        } else {
+          // Create new conversation
+          const { data: newConv, error: newConvError } = await supabase
+            .from('conversations')
+            .insert({
+              participant_1_id: currentUser.id,
+              participant_2_id: farmerId
+            })
+            .select()
+            .single();
+
+          if (newConvError) {
+            console.error('Error creating conversation:', newConvError);
+            return;
+          }
+          conversationId = newConv.id;
+        }
+
+        // Send initial message
+        const { error: messageError } = await supabase
+          .from('messages')
+          .insert({
+            sender_id: currentUser.id,
+            receiver_id: farmerId,
+            content: `Hi! I'm interested in your ${farmerData.productName}. Can you provide more details?`
+          });
+
+        if (messageError) {
+          console.error('Error sending message:', messageError);
+        }
+
+        // Select the conversation
+        setSelectedConversation(conversationId);
+
+        toast({
+          title: "Chat Started",
+          description: `Started conversation with ${farmerData.farmerName}`,
+        });
+      };
+
+      createOrFindConversation();
+    }
+  }, [farmerData, currentUser]);
+
+  // Load messages for selected conversation
+  useEffect(() => {
+    if (!selectedConversation || !currentUser) return;
+
+    const loadMessages = async () => {
+      // Get user's profile first to get the profile ID
+      const { data: userProfile, error: userError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', currentUser.id)
+        .single();
+
+      if (userError || !userProfile) {
+        console.error('Error loading user profile:', userError);
+        return;
+      }
+
+      const conversation = conversations.find(c => c.id === selectedConversation);
+      if (!conversation) return;
+
+      const otherParticipantId = conversation.participant_1_id === userProfile.id ? 
+        conversation.participant_2_id : conversation.participant_1_id;
+
+      const { data: messages, error } = await supabase
+        .from('messages')
+        .select('*')
+        .or(`and(sender_id.eq.${userProfile.id},receiver_id.eq.${otherParticipantId}),and(receiver_id.eq.${userProfile.id},sender_id.eq.${otherParticipantId})`)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error loading messages:', error);
+        return;
+      }
+
+      const formattedMessages: ChatMessage[] = messages.map(msg => ({
+        id: msg.id,
+        sender_id: msg.sender_id,
+        receiver_id: msg.receiver_id,
+        content: msg.content,
+        created_at: msg.created_at,
+        is_read: msg.is_read,
+        isOwn: msg.sender_id === userProfile.id,
+        senderName: msg.sender_id === userProfile.id ? 'You' : conversation.participantName
+      }));
+
+      setMessages(formattedMessages);
+    };
+
+    loadMessages();
+  }, [selectedConversation, currentUser, conversations]);
+
+  // Set up real-time subscriptions
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_id=eq.${currentUser.id}`
+        },
+        (payload) => {
+          console.log('New message received:', payload.new);
+          
+          // Add the new message to the current conversation if it matches
+          if (selectedConversation) {
+            const conv = conversations.find(c => c.id === selectedConversation);
+            if (conv && (payload.new.sender_id === (conv.participant_1_id === currentUser.id ? conv.participant_2_id : conv.participant_1_id))) {
+              setMessages(prev => [...prev, {
+                id: payload.new.id,
+                sender_id: payload.new.sender_id,
+                receiver_id: payload.new.receiver_id,
+                content: payload.new.content,
+                created_at: payload.new.created_at,
+                is_read: payload.new.is_read,
+                isOwn: false,
+                senderName: 'Other User'
+              }]);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser, selectedConversation, conversations]);
+
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !selectedConversation || !currentUser) return;
+
+    const conversation = conversations.find(c => c.id === selectedConversation);
+    if (!conversation) return;
+
+    const receiverId = conversation.participant_1_id === currentUser.id ? 
+      conversation.participant_2_id : conversation.participant_1_id;
+
+    const { error } = await supabase
+      .from('messages')
+      .insert({
+        sender_id: currentUser.id,
+        receiver_id: receiverId,
+        content: newMessage
+      });
+
+    if (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send message",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Add message to local state
+    setMessages(prev => [...prev, {
+      id: Date.now().toString(),
+      sender_id: currentUser.id,
+      receiver_id: receiverId,
+      content: newMessage,
+      created_at: new Date().toISOString(),
+      is_read: false,
+      isOwn: true,
+      senderName: 'You'
+    }]);
+
+    setNewMessage('');
 
     toast({
       title: "Message sent",
@@ -158,10 +343,32 @@ const Chat = () => {
     });
   };
 
-  const selectedChatData = chats.find(chat => chat.id === selectedChat);
-  const filteredChats = chats.filter(chat => 
-    chat.participantName.toLowerCase().includes(searchTerm.toLowerCase())
+  const selectedConversationData = conversations.find(conv => conv.id === selectedConversation);
+  const filteredConversations = conversations.filter(conv => 
+    conv.participantName.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="container mx-auto p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading conversations...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="container mx-auto p-6 flex items-center justify-center">
+        <div className="text-center">
+          <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">Please log in to access messages</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-6">
@@ -190,35 +397,35 @@ const Chat = () => {
           </CardHeader>
           <CardContent className="p-0">
             <div className="space-y-2">
-              {filteredChats.map((chat) => (
+              {filteredConversations.map((conversation) => (
                 <div
-                  key={chat.id}
+                  key={conversation.id}
                   className={`p-4 cursor-pointer border-b hover:bg-muted/50 ${
-                    selectedChat === chat.id ? 'bg-primary/10' : ''
+                    selectedConversation === conversation.id ? 'bg-primary/10' : ''
                   }`}
-                  onClick={() => setSelectedChat(chat.id)}
+                  onClick={() => setSelectedConversation(conversation.id)}
                 >
                   <div className="flex items-center gap-3">
                     <Avatar>
-                      <AvatarImage src={chat.avatar} />
-                      <AvatarFallback>{chat.participantName.charAt(0)}</AvatarFallback>
+                      <AvatarImage src={conversation.avatar} />
+                      <AvatarFallback>{conversation.participantName.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <p className="font-medium truncate">{chat.participantName}</p>
+                        <p className="font-medium truncate">{conversation.participantName}</p>
                         <div className="flex items-center gap-2">
-                          <Badge variant={chat.participantType === 'farmer' ? 'default' : 'secondary'} className="text-xs">
-                            {chat.participantType}
+                          <Badge variant={conversation.participantType === 'farmer' ? 'default' : 'secondary'} className="text-xs">
+                            {conversation.participantType}
                           </Badge>
-                          {chat.unreadCount > 0 && (
+                          {conversation.unreadCount > 0 && (
                             <Badge variant="destructive" className="text-xs rounded-full w-5 h-5 flex items-center justify-center p-0">
-                              {chat.unreadCount}
+                              {conversation.unreadCount}
                             </Badge>
                           )}
                         </div>
                       </div>
-                      <p className="text-sm text-muted-foreground truncate">{chat.lastMessage}</p>
-                      <p className="text-xs text-muted-foreground">{chat.timestamp}</p>
+                      <p className="text-sm text-muted-foreground truncate">{conversation.last_message}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(conversation.updated_at).toLocaleString()}</p>
                     </div>
                   </div>
                 </div>
@@ -229,19 +436,19 @@ const Chat = () => {
 
         {/* Chat Messages */}
         <Card className="lg:col-span-2">
-          {selectedChatData ? (
+          {selectedConversationData ? (
             <>
               <CardHeader className="border-b">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Avatar>
-                      <AvatarImage src={selectedChatData.avatar} />
-                      <AvatarFallback>{selectedChatData.participantName.charAt(0)}</AvatarFallback>
+                      <AvatarImage src={selectedConversationData.avatar} />
+                      <AvatarFallback>{selectedConversationData.participantName.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <CardTitle className="text-lg">{selectedChatData.participantName}</CardTitle>
+                      <CardTitle className="text-lg">{selectedConversationData.participantName}</CardTitle>
                       <CardDescription>
-                        {selectedChatData.participantType === 'farmer' ? 'Farmer' : 'Buyer'} • Online
+                        {selectedConversationData.participantType === 'farmer' ? 'Farmer' : 'Buyer'} • Online
                       </CardDescription>
                     </div>
                   </div>
@@ -250,7 +457,7 @@ const Chat = () => {
                       variant="outline" 
                       size="sm"
                       onClick={() => {
-                        if (farmerData && selectedChat === `farmer-${farmerData.productId}`) {
+                        if (farmerData && selectedConversation === `farmer-${farmerData.productId}`) {
                           toast({
                             title: "Farmer Contact",
                             description: `${farmerData.farmerName}: ${farmerData.farmerPhone}`,
@@ -295,11 +502,11 @@ const Chat = () => {
                               : 'bg-muted'
                           }`}
                         >
-                          <p className="text-sm">{message.message}</p>
+                          <p className="text-sm">{message.content}</p>
                           <p className={`text-xs mt-1 ${
                             message.isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
                           }`}>
-                            {message.timestamp}
+                            {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </p>
                         </div>
                       </div>
