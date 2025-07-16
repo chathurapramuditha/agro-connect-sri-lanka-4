@@ -33,6 +33,7 @@ import Notifications from "./pages/Notifications";
 import Chat from "./pages/Chat";
 import Cart from "./pages/Cart";
 import Weather from "./pages/Weather";
+import CropCalendar from "./pages/CropCalendar";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -73,6 +74,7 @@ const App = () => (
                 <Route path="/buyer/blogs/create" element={<BuyerBlogCreate />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/weather" element={<Weather />} />
+                <Route path="/crop-calendar" element={<CropCalendar />} />
                 <Route path="/chat" element={<Chat />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/admin/*" element={<Dashboard />} />
