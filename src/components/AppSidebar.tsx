@@ -73,7 +73,6 @@ export function AppSidebar({ userType }: AppSidebarProps) {
 
   const items = getItems();
   const isActive = (path: string) => currentPath === path;
-  const isExpanded = items.some((i) => isActive(i.url));
 
   return (
     <Sidebar collapsible="icon">
@@ -91,12 +90,14 @@ export function AppSidebar({ userType }: AppSidebarProps) {
                       to={item.url}
                       end
                       className={({ isActive }) =>
-                        isActive 
-                          ? 'bg-primary text-primary-foreground font-medium' 
-                          : 'hover:bg-muted/50'
+                        `flex items-center w-full px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                          isActive 
+                            ? 'bg-primary text-primary-foreground' 
+                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                        }`
                       }
                     >
-                      <item.icon className="mr-2 h-4 w-4" />
+                      <item.icon className="mr-2 h-4 w-4 flex-shrink-0" />
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
