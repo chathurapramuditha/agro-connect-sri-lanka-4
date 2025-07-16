@@ -60,9 +60,11 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-              <span className="text-primary-foreground font-bold">A</span>
-            </div>
+            <img 
+              src="/lovable-uploads/b7231426-d66f-4278-a2e1-bccecc5d994b.png" 
+              alt="AgroLink Logo" 
+              className="w-8 h-8"
+            />
             <span className="font-bold text-xl text-primary">AgroLink</span>
           </Link>
 
