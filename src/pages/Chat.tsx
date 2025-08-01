@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { MessageSquare, Send, Search, Phone, Video } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useNotificationSound } from '@/hooks/useNotificationSound';
 
 interface ChatMessage {
   id: string;
@@ -35,6 +36,7 @@ interface Conversation {
 const Chat = () => {
   const location = useLocation();
   const { toast } = useToast();
+  const { playNotificationSound } = useNotificationSound();
   
   // Get farmer info from navigation state
   const farmerData = location.state;
@@ -68,65 +70,6 @@ const Chat = () => {
   // Load conversations
   useEffect(() => {
     if (!currentUser) return;
-
-    const loadConversations = async () => {
-      // Get user's profile first
-      const { data: userProfile, error: userError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', currentUser.id)
-        .single();
-
-      if (userError || !userProfile) {
-        console.error('Error loading user profile:', userError);
-        return;
-      }
-
-      const { data: conversations, error } = await supabase
-        .from('conversations')
-        .select('*')
-        .or(`participant_1_id.eq.${userProfile.id},participant_2_id.eq.${userProfile.id}`)
-        .order('updated_at', { ascending: false });
-
-      if (error) {
-        console.error('Error loading conversations:', error);
-        return;
-      }
-
-      const formattedConversations: Conversation[] = [];
-      
-      for (const conv of conversations) {
-        const isParticipant1 = conv.participant_1_id === userProfile.id;
-        const otherParticipantId = isParticipant1 ? conv.participant_2_id : conv.participant_1_id;
-        
-        // Get other participant's profile
-        const { data: otherProfile, error: profileError } = await supabase
-          .from('profiles')
-          .select('full_name, user_type, avatar_url')
-          .eq('id', otherParticipantId)
-          .single();
-
-        if (profileError || !otherProfile) {
-          console.error('Error loading participant profile:', profileError);
-          continue;
-        }
-
-        formattedConversations.push({
-          id: conv.id,
-          participant_1_id: conv.participant_1_id,
-          participant_2_id: conv.participant_2_id,
-          last_message: 'No messages yet',
-          updated_at: conv.updated_at,
-          participantName: otherProfile.full_name,
-          participantType: otherProfile.user_type as 'farmer' | 'buyer',
-          unreadCount: 0,
-          avatar: otherProfile.avatar_url
-        });
-      }
-
-      setConversations(formattedConversations);
-    };
-
     loadConversations();
   }, [currentUser]);
 
@@ -134,25 +77,40 @@ const Chat = () => {
   useEffect(() => {
     if (farmerData && currentUser) {
       const createOrFindConversation = async () => {
-        // First, get the farmer's profile by product
-        const { data: product, error: productError } = await supabase
-          .from('products')
-          .select('farmer_id, profiles!products_farmer_id_fkey(id, full_name, user_type, phone_number)')
-          .eq('id', farmerData.productId)
+        // Get current user's profile ID
+        const { data: userProfile, error: userError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', currentUser.id)
           .single();
 
-        if (productError || !product) {
-          console.error('Error finding product:', productError);
+        if (userError || !userProfile) {
+          console.error('Error loading user profile:', userError);
           return;
         }
 
-        const farmerId = product.farmer_id;
+        let farmerId = farmerData.farmerId;
+        
+        // If we have a productId but no farmerId, get it from the product
+        if (!farmerId && farmerData.productId) {
+          const { data: product, error: productError } = await supabase
+            .from('products')
+            .select('farmer_id')
+            .eq('id', farmerData.productId)
+            .single();
+
+          if (productError || !product) {
+            console.error('Error finding product:', productError);
+            return;
+          }
+          farmerId = product.farmer_id;
+        }
         
         // Check if conversation already exists
         const { data: existingConv, error: convError } = await supabase
           .from('conversations')
           .select('*')
-          .or(`and(participant_1_id.eq.${currentUser.id},participant_2_id.eq.${farmerId}),and(participant_1_id.eq.${farmerId},participant_2_id.eq.${currentUser.id})`)
+          .or(`and(participant_1_id.eq.${userProfile.id},participant_2_id.eq.${farmerId}),and(participant_1_id.eq.${farmerId},participant_2_id.eq.${userProfile.id})`)
           .single();
 
         let conversationId;
@@ -164,7 +122,7 @@ const Chat = () => {
           const { data: newConv, error: newConvError } = await supabase
             .from('conversations')
             .insert({
-              participant_1_id: currentUser.id,
+              participant_1_id: userProfile.id,
               participant_2_id: farmerId
             })
             .select()
@@ -181,7 +139,7 @@ const Chat = () => {
         const { error: messageError } = await supabase
           .from('messages')
           .insert({
-            sender_id: currentUser.id,
+            sender_id: userProfile.id,
             receiver_id: farmerId,
             content: `Hi! I'm interested in your ${farmerData.productName}. Can you provide more details?`
           });
@@ -271,6 +229,16 @@ const Chat = () => {
         (payload) => {
           console.log('New message received:', payload.new);
           
+          // Play notification sound for incoming messages
+          playNotificationSound();
+          
+          // Show notification
+          toast({
+            title: "New Message",
+            description: "You have received a new message",
+            duration: 3000,
+          });
+          
           // Add the new message to the current conversation if it matches
           if (selectedConversation) {
             const conv = conversations.find(c => c.id === selectedConversation);
@@ -283,10 +251,13 @@ const Chat = () => {
                 created_at: payload.new.created_at,
                 is_read: payload.new.is_read,
                 isOwn: false,
-                senderName: 'Other User'
+                senderName: conv.participantName
               }]);
             }
           }
+          
+          // Refresh conversations to update last message and unread count
+          loadConversations();
         }
       )
       .subscribe();
@@ -294,21 +265,94 @@ const Chat = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentUser, selectedConversation, conversations]);
+  }, [currentUser, selectedConversation, conversations, playNotificationSound, toast]);
+
+  // Add a function to load conversations that can be called from the useEffect
+  const loadConversations = async () => {
+    if (!currentUser) return;
+
+    // Get user's profile first
+    const { data: userProfile, error: userError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', currentUser.id)
+      .single();
+
+    if (userError || !userProfile) {
+      console.error('Error loading user profile:', userError);
+      return;
+    }
+
+    const { data: conversations, error } = await supabase
+      .from('conversations')
+      .select('*')
+      .or(`participant_1_id.eq.${userProfile.id},participant_2_id.eq.${userProfile.id}`)
+      .order('updated_at', { ascending: false });
+
+    if (error) {
+      console.error('Error loading conversations:', error);
+      return;
+    }
+
+    const formattedConversations: Conversation[] = [];
+    
+    for (const conv of conversations) {
+      const isParticipant1 = conv.participant_1_id === userProfile.id;
+      const otherParticipantId = isParticipant1 ? conv.participant_2_id : conv.participant_1_id;
+      
+      // Get other participant's profile
+      const { data: otherProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name, user_type, avatar_url')
+        .eq('id', otherParticipantId)
+        .single();
+
+      if (profileError || !otherProfile) {
+        console.error('Error loading participant profile:', profileError);
+        continue;
+      }
+
+      formattedConversations.push({
+        id: conv.id,
+        participant_1_id: conv.participant_1_id,
+        participant_2_id: conv.participant_2_id,
+        last_message: 'No messages yet',
+        updated_at: conv.updated_at,
+        participantName: otherProfile.full_name,
+        participantType: otherProfile.user_type as 'farmer' | 'buyer',
+        unreadCount: 0,
+        avatar: otherProfile.avatar_url
+      });
+    }
+
+    setConversations(formattedConversations);
+  };
 
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation || !currentUser) return;
 
+    // Get current user's profile ID
+    const { data: userProfile, error: userError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', currentUser.id)
+      .single();
+
+    if (userError || !userProfile) {
+      console.error('Error loading user profile:', userError);
+      return;
+    }
+
     const conversation = conversations.find(c => c.id === selectedConversation);
     if (!conversation) return;
 
-    const receiverId = conversation.participant_1_id === currentUser.id ? 
+    const receiverId = conversation.participant_1_id === userProfile.id ? 
       conversation.participant_2_id : conversation.participant_1_id;
 
     const { error } = await supabase
       .from('messages')
       .insert({
-        sender_id: currentUser.id,
+        sender_id: userProfile.id,
         receiver_id: receiverId,
         content: newMessage
       });
@@ -326,7 +370,7 @@ const Chat = () => {
     // Add message to local state
     setMessages(prev => [...prev, {
       id: Date.now().toString(),
-      sender_id: currentUser.id,
+      sender_id: userProfile.id,
       receiver_id: receiverId,
       content: newMessage,
       created_at: new Date().toISOString(),

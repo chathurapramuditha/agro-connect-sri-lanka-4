@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, MapPin, Star, Phone, MessageCircle, Leaf, TrendingUp, ShoppingCart, Plus, Users } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -23,9 +24,78 @@ const Marketplace = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data - in real app, this would come from API
-  const products = [
+  // Fetch products from Supabase
+  useEffect(() => {
+    fetchProducts();
+    
+    // Set up real-time subscription for product updates
+    const channel = supabase
+      .channel('marketplace-products')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
+        console.log('Product updated in marketplace:', payload);
+        fetchProducts(); // Refresh products when any change occurs
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          profiles!products_farmer_id_fkey(full_name, phone_number, location),
+          product_categories(name, name_sinhala, name_tamil)
+        `)
+        .eq('is_available', true)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      const formattedProducts = data?.map(product => ({
+        id: product.id,
+        name: product.name,
+        nameSi: product.name_sinhala || product.name,
+        nameTa: product.name_tamil || product.name,
+        category: product.product_categories?.name?.toLowerCase() || 'other',
+        price: product.price_per_kg,
+        unit: product.unit,
+        quantity: `${product.quantity_available} ${product.unit} available`,
+        farmer: product.profiles?.full_name || 'Unknown Farmer',
+        farmerPhone: product.profiles?.phone_number || 'N/A',
+        location: product.location || product.profiles?.location || 'Unknown Location',
+        rating: 4.5 + Math.random() * 0.5, // Mock rating for now
+        image: product.images?.[0] || '/placeholder.svg',
+        description: product.description || 'Fresh produce',
+        aiScore: 85 + Math.floor(Math.random() * 15),
+        priceChange: Math.floor(Math.random() * 21) - 10,
+        productId: product.id,
+        farmerId: product.farmer_id,
+        isOrganic: product.is_organic
+      })) || [];
+      
+      setProducts(formattedProducts);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load products",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Mock data kept as fallback
+  const mockProducts = [
     {
       id: 1,
       name: 'Fresh Tomatoes',
@@ -131,7 +201,8 @@ const Marketplace = () => {
         farmerName: product.farmer,
         farmerPhone: product.farmerPhone,
         productName: getProductName(product),
-        productId: product.id
+        productId: product.productId || product.id,
+        farmerId: product.farmerId
       }
     });
   };
@@ -264,8 +335,14 @@ const Marketplace = () => {
             </div>
 
             {/* Products Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProducts.map((product) => (
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <span className="ml-3">Loading fresh products...</span>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredProducts.map((product) => (
                 <Card key={product.id} className="group hover:shadow-lg transition-shadow duration-200">
                   <CardHeader className="p-0">
                     <div className="relative">
@@ -358,8 +435,9 @@ const Marketplace = () => {
                     </Button>
                   </CardFooter>
                 </Card>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             {/* No Products Results */}
             {filteredProducts.length === 0 && (
