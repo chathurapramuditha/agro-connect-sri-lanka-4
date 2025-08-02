@@ -3,7 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, UserCheck, UserX, Shield, Trash2, UserMinus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Users, UserCheck, UserX, Shield, Trash2, UserMinus, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface UserProfile {
@@ -20,6 +23,13 @@ interface UserProfile {
 const UserManagement = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [adminFormData, setAdminFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -139,6 +149,55 @@ const UserManagement = () => {
     }
   };
 
+  const handleAdminFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setAdminFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const createAdminAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (adminFormData.password !== adminFormData.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: adminFormData.email,
+        password: adminFormData.password,
+        options: {
+          data: {
+            full_name: adminFormData.name,
+            user_type: 'admin',
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Admin account created successfully",
+      });
+
+      setIsDialogOpen(false);
+      setAdminFormData({ name: '', email: '', password: '', confirmPassword: '' });
+      fetchUsers(); // Refresh the user list
+    } catch (error: any) {
+      console.error('Error creating admin:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create admin account",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -158,12 +217,93 @@ const UserManagement = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="flex items-center gap-4 mb-6">
-        <Users className="h-8 w-8 text-primary" />
-        <div>
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground">Manage user accounts and permissions</p>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <Users className="h-8 w-8 text-primary" />
+          <div>
+            <h1 className="text-3xl font-bold">User Management</h1>
+            <p className="text-muted-foreground">Manage user accounts and permissions</p>
+          </div>
         </div>
+        
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="flex items-center gap-2">
+              <UserPlus className="h-4 w-4" />
+              Create Admin Account
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Admin Account</DialogTitle>
+              <DialogDescription>
+                Create a new administrator account with full system access.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={createAdminAccount} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="admin-name">Full Name</Label>
+                <Input
+                  id="admin-name"
+                  name="name"
+                  placeholder="Administrator Full Name"
+                  value={adminFormData.name}
+                  onChange={handleAdminFormChange}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="admin-email">Email</Label>
+                <Input
+                  id="admin-email"
+                  name="email"
+                  type="email"
+                  placeholder="admin@example.com"
+                  value={adminFormData.email}
+                  onChange={handleAdminFormChange}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="admin-password">Password</Label>
+                <Input
+                  id="admin-password"
+                  name="password"
+                  type="password"
+                  placeholder="Secure password"
+                  value={adminFormData.password}
+                  onChange={handleAdminFormChange}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="admin-confirm-password">Confirm Password</Label>
+                <Input
+                  id="admin-confirm-password"
+                  name="confirmPassword"
+                  type="password"
+                  placeholder="Confirm password"
+                  value={adminFormData.confirmPassword}
+                  onChange={handleAdminFormChange}
+                  required
+                />
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button type="submit" className="flex-1">
+                  Create Admin Account
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsDialogOpen(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid gap-6">

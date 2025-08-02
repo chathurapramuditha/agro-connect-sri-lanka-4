@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Eye, EyeOff, Mail, Lock, User, Building, Phone, MapPin } from 'lucide-react';
@@ -19,6 +19,7 @@ const Register = () => {
   const navigate = useNavigate();
   const defaultTab = searchParams.get('type') || 'farmer';
   const [loading, setLoading] = useState(false);
+  const [adminExists, setAdminExists] = useState(false);
   
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -42,6 +43,21 @@ const Register = () => {
     'Kurunegala', 'Puttalam', 'Anuradhapura', 'Polonnaruwa', 'Badulla',
     'Moneragala', 'Ratnapura', 'Kegalle'
   ];
+
+  useEffect(() => {
+    const checkAdminExists = async () => {
+      try {
+        const { data, error } = await supabase.rpc('admin_exists');
+        if (error) throw error;
+        setAdminExists(data);
+      } catch (error) {
+        console.error('Error checking admin existence:', error);
+        setAdminExists(true); // Default to blocking admin registration on error
+      }
+    };
+    
+    checkAdminExists();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, type, value } = e.target;
@@ -124,8 +140,8 @@ const Register = () => {
           <p className="text-muted-foreground">Create your account and start connecting</p>
         </div>
 
-        <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue={adminExists ? 'farmer' : defaultTab} className="w-full">
+          <TabsList className={`grid w-full ${adminExists ? 'grid-cols-2' : 'grid-cols-3'}`}>
             <TabsTrigger value="farmer" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               {t('auth.farmer')}
@@ -134,10 +150,12 @@ const Register = () => {
               <Building className="h-4 w-4" />
               {t('auth.buyer')}
             </TabsTrigger>
-            <TabsTrigger value="admin" className="flex items-center gap-2">
-              <Lock className="h-4 w-4" />
-              Admin
-            </TabsTrigger>
+            {!adminExists && (
+              <TabsTrigger value="admin" className="flex items-center gap-2">
+                <Lock className="h-4 w-4" />
+                Admin
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="farmer">
