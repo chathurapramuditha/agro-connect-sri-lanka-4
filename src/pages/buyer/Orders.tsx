@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -166,8 +167,8 @@ const Orders = () => {
             <p className="text-muted-foreground text-center mb-4">
               Start shopping in the marketplace to see your orders here
             </p>
-            <Button onClick={() => window.location.href = '/marketplace'}>
-              Browse Marketplace
+            <Button asChild>
+              <Link to="/marketplace">Browse Marketplace</Link>
             </Button>
           </CardContent>
         </Card>
@@ -285,13 +286,11 @@ const Orders = () => {
                     </Button>
                   )}
                   
-                  <Button
-                    variant="outline"
-                    onClick={() => window.location.href = `/chat?farmer=${order.farmer_profile.full_name}`}
-                    className="flex items-center gap-2"
-                  >
-                    <MapPin className="h-4 w-4" />
-                    Message Farmer
+                  <Button variant="outline" asChild className="flex items-center gap-2">
+                    <Link to={`/chat?farmer=${order.farmer_profile.full_name}`}>
+                      <MapPin className="h-4 w-4" />
+                      Message Farmer
+                    </Link>
                   </Button>
                 </div>
               </CardContent>

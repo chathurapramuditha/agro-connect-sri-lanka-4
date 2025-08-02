@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -116,8 +117,8 @@ const Cart = () => {
             <ShoppingCart className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">Your cart is empty</h3>
             <p className="text-muted-foreground mb-4">Start shopping to add items to your cart</p>
-            <Button onClick={() => window.location.href = '/marketplace'}>
-              Browse Products
+            <Button asChild>
+              <Link to="/marketplace">Browse Products</Link>
             </Button>
           </CardContent>
         </Card>
