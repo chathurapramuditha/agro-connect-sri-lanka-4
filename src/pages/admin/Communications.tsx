@@ -40,7 +40,7 @@ const Communications = () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .not('phone_number', 'is', null);
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       setUserProfiles(data || []);
@@ -298,8 +298,8 @@ const Communications = () => {
                               {profile.user_type}
                             </span>
                           </TableCell>
-                          <TableCell className="font-mono">{profile.phone_number}</TableCell>
-                          <TableCell>{profile.location || 'Not provided'}</TableCell>
+                          <TableCell className="font-mono">{profile.phone_number || 'Not specified'}</TableCell>
+                          <TableCell>{profile.location || 'Not specified'}</TableCell>
                           <TableCell>
                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                               profile.is_verified 

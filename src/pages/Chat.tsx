@@ -9,6 +9,7 @@ import { MessageSquare, Send, Search, Phone, Video } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
+import UserSearchDropdown from '@/components/UserSearchDropdown';
 
 interface ChatMessage {
   id: string;
@@ -387,6 +388,67 @@ const Chat = () => {
     });
   };
 
+  const createConversationWithUser = async (user: any) => {
+    if (!currentUser) return;
+
+    // Get current user's profile ID
+    const { data: userProfile, error: userError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', currentUser.id)
+      .single();
+
+    if (userError || !userProfile) {
+      console.error('Error loading user profile:', userError);
+      return;
+    }
+
+    // Check if conversation already exists
+    const { data: existingConv, error: convError } = await supabase
+      .from('conversations')
+      .select('*')
+      .or(`and(participant_1_id.eq.${userProfile.id},participant_2_id.eq.${user.id}),and(participant_1_id.eq.${user.id},participant_2_id.eq.${userProfile.id})`)
+      .single();
+
+    let conversationId;
+
+    if (existingConv) {
+      conversationId = existingConv.id;
+    } else {
+      // Create new conversation
+      const { data: newConv, error: newConvError } = await supabase
+        .from('conversations')
+        .insert({
+          participant_1_id: userProfile.id,
+          participant_2_id: user.id
+        })
+        .select()
+        .single();
+
+      if (newConvError) {
+        console.error('Error creating conversation:', newConvError);
+        toast({
+          title: "Error",
+          description: "Failed to create conversation",
+          variant: "destructive",
+        });
+        return;
+      }
+      conversationId = newConv.id;
+    }
+
+    // Reload conversations to show the new one
+    await loadConversations();
+    
+    // Select the conversation
+    setSelectedConversation(conversationId);
+
+    toast({
+      title: "Chat Started",
+      description: `Started conversation with ${user.full_name}`,
+    });
+  };
+
   const selectedConversationData = conversations.find(conv => conv.id === selectedConversation);
   const filteredConversations = conversations.filter(conv => 
     conv.participantName.toLowerCase().includes(searchTerm.toLowerCase())
@@ -429,15 +491,15 @@ const Chat = () => {
         <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle>Conversations</CardTitle>
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search conversations..."
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+            <UserSearchDropdown
+              onUserSelect={(user) => {
+                // Create or find conversation with selected user
+                setSearchTerm('');
+                createConversationWithUser(user);
+              }}
+              showChatButton={false}
+              placeholder="Search users to start a chat..."
+            />
           </CardHeader>
           <CardContent className="p-0">
             <div className="space-y-2">

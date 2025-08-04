@@ -95,7 +95,7 @@ const Register = () => {
             full_name: formData.name,
             user_type: userType,
             phone_number: formData.phone,
-            location: formData.location,
+            location: `${formData.location}${formData.district ? ', ' + formData.district : ''}`,
             bio: formData.description,
           }
         }
