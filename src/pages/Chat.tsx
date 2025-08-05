@@ -438,7 +438,7 @@ const Chat = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-[600px]">
         {/* Chat List */}
         <Card className="lg:col-span-1">
           <CardHeader>
@@ -493,7 +493,7 @@ const Chat = () => {
         </Card>
 
         {/* Chat Messages */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 flex flex-col">
           {selectedConversationData ? (
             <>
               <CardHeader className="border-b">
@@ -538,7 +538,7 @@ const Chat = () => {
                 </div>
               </CardHeader>
               
-              <CardContent className="flex flex-col h-full">
+              <CardContent className="flex flex-col flex-1 p-4 min-h-0">
                 <div className="flex-1 overflow-y-auto space-y-4 py-4">
                   {messages.map((message) => (
                     <div
