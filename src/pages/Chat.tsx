@@ -78,18 +78,6 @@ const Chat = () => {
   useEffect(() => {
     if (farmerData && currentUser) {
       const createOrFindConversation = async () => {
-        // Get current user's profile ID
-        const { data: userProfile, error: userError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('user_id', currentUser.id)
-          .single();
-
-        if (userError || !userProfile) {
-          console.error('Error loading user profile:', userError);
-          return;
-        }
-
         let farmerId = farmerData.farmerId;
         
         // If we have a productId but no farmerId, get it from the product
@@ -104,14 +92,26 @@ const Chat = () => {
             console.error('Error finding product:', productError);
             return;
           }
-          farmerId = product.farmer_id;
+          
+          // Get farmer's user_id from profile
+          const { data: farmerProfile, error: farmerProfileError } = await supabase
+            .from('profiles')
+            .select('user_id')
+            .eq('id', product.farmer_id)
+            .single();
+
+          if (farmerProfileError || !farmerProfile) {
+            console.error('Error finding farmer profile:', farmerProfileError);
+            return;
+          }
+          farmerId = farmerProfile.user_id;
         }
         
-        // Check if conversation already exists
+        // Check if conversation already exists using user_id
         const { data: existingConv, error: convError } = await supabase
           .from('conversations')
           .select('*')
-          .or(`and(participant_1_id.eq.${userProfile.id},participant_2_id.eq.${farmerId}),and(participant_1_id.eq.${farmerId},participant_2_id.eq.${userProfile.id})`)
+          .or(`and(participant_1_id.eq.${currentUser.id},participant_2_id.eq.${farmerId}),and(participant_1_id.eq.${farmerId},participant_2_id.eq.${currentUser.id})`)
           .single();
 
         let conversationId;
@@ -119,11 +119,11 @@ const Chat = () => {
         if (existingConv) {
           conversationId = existingConv.id;
         } else {
-          // Create new conversation
+          // Create new conversation using user_id
           const { data: newConv, error: newConvError } = await supabase
             .from('conversations')
             .insert({
-              participant_1_id: userProfile.id,
+              participant_1_id: currentUser.id,
               participant_2_id: farmerId
             })
             .select()
@@ -136,11 +136,11 @@ const Chat = () => {
           conversationId = newConv.id;
         }
 
-        // Send initial message
+        // Send initial message using user_id
         const { error: messageError } = await supabase
           .from('messages')
           .insert({
-            sender_id: userProfile.id,
+            sender_id: currentUser.id,
             receiver_id: farmerId,
             content: `Hi! I'm interested in your ${farmerData.productName}. Can you provide more details?`
           });
@@ -167,28 +167,16 @@ const Chat = () => {
     if (!selectedConversation || !currentUser) return;
 
     const loadMessages = async () => {
-      // Get user's profile first to get the profile ID
-      const { data: userProfile, error: userError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', currentUser.id)
-        .single();
-
-      if (userError || !userProfile) {
-        console.error('Error loading user profile:', userError);
-        return;
-      }
-
       const conversation = conversations.find(c => c.id === selectedConversation);
       if (!conversation) return;
 
-      const otherParticipantId = conversation.participant_1_id === userProfile.id ? 
+      const otherParticipantId = conversation.participant_1_id === currentUser.id ? 
         conversation.participant_2_id : conversation.participant_1_id;
 
       const { data: messages, error } = await supabase
         .from('messages')
         .select('*')
-        .or(`and(sender_id.eq.${userProfile.id},receiver_id.eq.${otherParticipantId}),and(receiver_id.eq.${userProfile.id},sender_id.eq.${otherParticipantId})`)
+        .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${otherParticipantId}),and(receiver_id.eq.${currentUser.id},sender_id.eq.${otherParticipantId})`)
         .order('created_at', { ascending: true });
 
       if (error) {
@@ -203,8 +191,8 @@ const Chat = () => {
         content: msg.content,
         created_at: msg.created_at,
         is_read: msg.is_read,
-        isOwn: msg.sender_id === userProfile.id,
-        senderName: msg.sender_id === userProfile.id ? 'You' : conversation.participantName
+        isOwn: msg.sender_id === currentUser.id,
+        senderName: msg.sender_id === currentUser.id ? 'You' : conversation.participantName
       }));
 
       setMessages(formattedMessages);
@@ -272,22 +260,10 @@ const Chat = () => {
   const loadConversations = async () => {
     if (!currentUser) return;
 
-    // Get user's profile first
-    const { data: userProfile, error: userError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('user_id', currentUser.id)
-      .single();
-
-    if (userError || !userProfile) {
-      console.error('Error loading user profile:', userError);
-      return;
-    }
-
     const { data: conversations, error } = await supabase
       .from('conversations')
       .select('*')
-      .or(`participant_1_id.eq.${userProfile.id},participant_2_id.eq.${userProfile.id}`)
+      .or(`participant_1_id.eq.${currentUser.id},participant_2_id.eq.${currentUser.id}`)
       .order('updated_at', { ascending: false });
 
     if (error) {
@@ -298,14 +274,14 @@ const Chat = () => {
     const formattedConversations: Conversation[] = [];
     
     for (const conv of conversations) {
-      const isParticipant1 = conv.participant_1_id === userProfile.id;
+      const isParticipant1 = conv.participant_1_id === currentUser.id;
       const otherParticipantId = isParticipant1 ? conv.participant_2_id : conv.participant_1_id;
       
-      // Get other participant's profile
+      // Get other participant's profile using user_id
       const { data: otherProfile, error: profileError } = await supabase
         .from('profiles')
         .select('full_name, user_type, avatar_url')
-        .eq('id', otherParticipantId)
+        .eq('user_id', otherParticipantId)
         .single();
 
       if (profileError || !otherProfile) {
@@ -332,28 +308,16 @@ const Chat = () => {
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation || !currentUser) return;
 
-    // Get current user's profile ID
-    const { data: userProfile, error: userError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('user_id', currentUser.id)
-      .single();
-
-    if (userError || !userProfile) {
-      console.error('Error loading user profile:', userError);
-      return;
-    }
-
     const conversation = conversations.find(c => c.id === selectedConversation);
     if (!conversation) return;
 
-    const receiverId = conversation.participant_1_id === userProfile.id ? 
+    const receiverId = conversation.participant_1_id === currentUser.id ? 
       conversation.participant_2_id : conversation.participant_1_id;
 
     const { error } = await supabase
       .from('messages')
       .insert({
-        sender_id: userProfile.id,
+        sender_id: currentUser.id,
         receiver_id: receiverId,
         content: newMessage
       });
@@ -371,7 +335,7 @@ const Chat = () => {
     // Add message to local state
     setMessages(prev => [...prev, {
       id: Date.now().toString(),
-      sender_id: userProfile.id,
+      sender_id: currentUser.id,
       receiver_id: receiverId,
       content: newMessage,
       created_at: new Date().toISOString(),
@@ -391,23 +355,11 @@ const Chat = () => {
   const createConversationWithUser = async (user: any) => {
     if (!currentUser) return;
 
-    // Get current user's profile ID
-    const { data: userProfile, error: userError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('user_id', currentUser.id)
-      .single();
-
-    if (userError || !userProfile) {
-      console.error('Error loading user profile:', userError);
-      return;
-    }
-
-    // Check if conversation already exists
+    // Check if conversation already exists using user_id directly
     const { data: existingConv, error: convError } = await supabase
       .from('conversations')
       .select('*')
-      .or(`and(participant_1_id.eq.${userProfile.id},participant_2_id.eq.${user.id}),and(participant_1_id.eq.${user.id},participant_2_id.eq.${userProfile.id})`)
+      .or(`and(participant_1_id.eq.${currentUser.id},participant_2_id.eq.${user.user_id}),and(participant_1_id.eq.${user.user_id},participant_2_id.eq.${currentUser.id})`)
       .single();
 
     let conversationId;
@@ -415,12 +367,12 @@ const Chat = () => {
     if (existingConv) {
       conversationId = existingConv.id;
     } else {
-      // Create new conversation
+      // Create new conversation using user_id directly
       const { data: newConv, error: newConvError } = await supabase
         .from('conversations')
         .insert({
-          participant_1_id: userProfile.id,
-          participant_2_id: user.id
+          participant_1_id: currentUser.id,
+          participant_2_id: user.user_id
         })
         .select()
         .single();
