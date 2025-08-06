@@ -13,20 +13,22 @@ import { supabase } from '@/integrations/supabase/client';
 
 const Communications = () => {
   const [emailData, setEmailData] = useState({
-    recipient: '',
+    recipientType: '',
+    customEmail: '',
     subject: '',
     message: ''
   });
   
   const [smsData, setSmsData] = useState({
-    recipient: '',
+    recipientType: '',
+    customPhone: '',
     message: '',
-    countryCode: '+94',
-    phoneNumber: ''
+    countryCode: '+94'
   });
 
   const [userProfiles, setUserProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const { toast } = useToast();
 
@@ -57,7 +59,9 @@ const Communications = () => {
   };
 
   const handleSendEmail = async () => {
-    if (!emailData.recipient || !emailData.subject || !emailData.message) {
+    const recipient = emailData.recipientType === 'custom' ? emailData.customEmail : emailData.recipientType;
+    
+    if (!recipient || !emailData.subject || !emailData.message) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
@@ -66,17 +70,42 @@ const Communications = () => {
       return;
     }
 
-    // This would integrate with an email service in a real implementation
-    toast({
-      title: "Email Sent",
-      description: `Email sent to ${emailData.recipient}`,
-    });
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: {
+          recipientType: emailData.recipientType,
+          customEmail: emailData.customEmail,
+          subject: emailData.subject,
+          message: emailData.message
+        }
+      });
 
-    setEmailData({ recipient: '', subject: '', message: '' });
+      if (error) throw error;
+
+      toast({
+        title: "Email Sent Successfully",
+        description: `Email sent to ${recipient}`,
+      });
+
+      setEmailData({ recipientType: '', customEmail: '', subject: '', message: '' });
+    } catch (error) {
+      console.error('Error sending email:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send email. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleSendSMS = async () => {
-    if (!smsData.recipient || !smsData.message) {
+    const recipient = smsData.recipientType === 'custom' ? 
+      `${smsData.countryCode}${smsData.customPhone}` : smsData.recipientType;
+    
+    if (!smsData.recipientType || !smsData.message) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
@@ -85,13 +114,44 @@ const Communications = () => {
       return;
     }
 
-    // This would integrate with an SMS service in a real implementation
-    toast({
-      title: "SMS Sent",
-      description: `SMS sent to ${smsData.recipient}`,
-    });
+    if (smsData.recipientType === 'custom' && !smsData.customPhone) {
+      toast({
+        title: "Error",
+        description: "Please enter a phone number",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    setSmsData({ recipient: '', message: '', countryCode: '+94', phoneNumber: '' });
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-sms', {
+        body: {
+          recipientType: smsData.recipientType,
+          customPhone: smsData.recipientType === 'custom' ? 
+            `${smsData.countryCode}${smsData.customPhone}` : null,
+          message: smsData.message
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "SMS Sent Successfully",
+        description: `SMS sent to ${recipient}`,
+      });
+
+      setSmsData({ recipientType: '', customPhone: '', message: '', countryCode: '+94' });
+    } catch (error) {
+      console.error('Error sending SMS:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send SMS. Please check the phone number and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -132,8 +192,8 @@ const Communications = () => {
               <div className="space-y-2">
                 <Label htmlFor="email-recipient">Recipient</Label>
                 <Select
-                  value={emailData.recipient}
-                  onValueChange={(value) => setEmailData({ ...emailData, recipient: value })}
+                  value={emailData.recipientType}
+                  onValueChange={(value) => setEmailData({ ...emailData, recipientType: value, customEmail: '' })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select recipient type" />
@@ -145,10 +205,12 @@ const Communications = () => {
                     <SelectItem value="custom">Custom Email</SelectItem>
                   </SelectContent>
                 </Select>
-                {emailData.recipient === 'custom' && (
+                {emailData.recipientType === 'custom' && (
                   <Input
                     placeholder="Enter email address"
-                    onChange={(e) => setEmailData({ ...emailData, recipient: e.target.value })}
+                    type="email"
+                    value={emailData.customEmail}
+                    onChange={(e) => setEmailData({ ...emailData, customEmail: e.target.value })}
                   />
                 )}
               </div>
@@ -174,9 +236,9 @@ const Communications = () => {
                 />
               </div>
 
-              <Button onClick={handleSendEmail} className="w-full">
+              <Button onClick={handleSendEmail} className="w-full" disabled={sending}>
                 <Send className="h-4 w-4 mr-2" />
-                Send Email
+                {sending ? 'Sending Email...' : 'Send Email'}
               </Button>
             </CardContent>
           </Card>
@@ -194,8 +256,8 @@ const Communications = () => {
               <div className="space-y-2">
                 <Label htmlFor="sms-recipient">Recipient</Label>
                 <Select
-                  value={smsData.recipient}
-                  onValueChange={(value) => setSmsData({ ...smsData, recipient: value })}
+                  value={smsData.recipientType}
+                  onValueChange={(value) => setSmsData({ ...smsData, recipientType: value, customPhone: '' })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select recipient type" />
@@ -207,10 +269,10 @@ const Communications = () => {
                     <SelectItem value="custom">Custom Phone Number</SelectItem>
                   </SelectContent>
                 </Select>
-                {smsData.recipient === 'custom' && (
+                {smsData.recipientType === 'custom' && (
                   <div className="space-y-2">
                     <div className="flex gap-2">
-                      <Select defaultValue="+94" onValueChange={(value) => setSmsData({ ...smsData, countryCode: value })}>
+                      <Select value={smsData.countryCode} onValueChange={(value) => setSmsData({ ...smsData, countryCode: value })}>
                         <SelectTrigger className="w-24">
                           <SelectValue />
                         </SelectTrigger>
@@ -226,8 +288,8 @@ const Communications = () => {
                         type="tel"
                         placeholder="Enter phone number"
                         className="flex-1"
-                        value={smsData.phoneNumber || ''}
-                        onChange={(e) => setSmsData({ ...smsData, phoneNumber: e.target.value })}
+                        value={smsData.customPhone}
+                        onChange={(e) => setSmsData({ ...smsData, customPhone: e.target.value.replace(/[^0-9]/g, '') })}
                       />
                     </div>
                   </div>
@@ -249,9 +311,9 @@ const Communications = () => {
                 </p>
               </div>
 
-              <Button onClick={handleSendSMS} className="w-full">
+              <Button onClick={handleSendSMS} className="w-full" disabled={sending}>
                 <Send className="h-4 w-4 mr-2" />
-                Send SMS
+                {sending ? 'Sending SMS...' : 'Send SMS'}
               </Button>
             </CardContent>
           </Card>
