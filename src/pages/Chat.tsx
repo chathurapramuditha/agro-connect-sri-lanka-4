@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
 import UserSearchDropdown from '@/components/UserSearchDropdown';
+import WebRTCCall from '@/components/WebRTCCall';
 
 interface ChatMessage {
   id: string;
@@ -49,6 +50,7 @@ const Chat = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isCallOpen, setIsCallOpen] = useState(false);
 
   // Check authentication
   useEffect(() => {
@@ -531,7 +533,11 @@ const Chat = () => {
                     >
                       <Phone className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setIsCallOpen(true)}
+                    >
                       <Video className="h-4 w-4" />
                     </Button>
                   </div>
@@ -598,6 +604,19 @@ const Chat = () => {
           )}
         </Card>
       </div>
+
+      {/* WebRTC Call Component */}
+      {selectedConversationData && isCallOpen && (
+        <WebRTCCall
+          isOpen={isCallOpen}
+          onClose={() => setIsCallOpen(false)}
+          conversationId={selectedConversation!}
+          participantName={selectedConversationData.participantName}
+          currentUserId={currentUser.id}
+          otherUserId={selectedConversationData.participant_1_id === currentUser.id ? 
+            selectedConversationData.participant_2_id : selectedConversationData.participant_1_id}
+        />
+      )}
     </div>
   );
 };
