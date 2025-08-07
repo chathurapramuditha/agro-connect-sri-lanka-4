@@ -10,8 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Mail, MessageSquare, Send, Users, Phone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Communications = () => {
+  const { t } = useLanguage();
   const [emailData, setEmailData] = useState({
     recipientType: '',
     customEmail: '',
@@ -49,7 +51,7 @@ const Communications = () => {
     } catch (error) {
       console.error('Error fetching user profiles:', error);
       toast({
-        title: "Error",
+        title: t('common.error'),
         description: "Failed to fetch user phone numbers",
         variant: "destructive",
       });
@@ -63,8 +65,8 @@ const Communications = () => {
     
     if (!recipient || !emailData.subject || !emailData.message) {
       toast({
-        title: "Error",
-        description: "Please fill in all fields",
+        title: t('common.error'),
+        description: t('admin.fillfields'),
         variant: "destructive",
       });
       return;
@@ -84,7 +86,7 @@ const Communications = () => {
       if (error) throw error;
 
       toast({
-        title: "Email Sent Successfully",
+        title: t('admin.emailsent'),
         description: `Email sent to ${recipient}`,
       });
 
@@ -92,8 +94,8 @@ const Communications = () => {
     } catch (error) {
       console.error('Error sending email:', error);
       toast({
-        title: "Error",
-        description: "Failed to send email. Please try again.",
+        title: t('common.error'),
+        description: t('admin.emailfailed'),
         variant: "destructive",
       });
     } finally {
@@ -107,8 +109,8 @@ const Communications = () => {
     
     if (!smsData.recipientType || !smsData.message) {
       toast({
-        title: "Error",
-        description: "Please fill in all fields",
+        title: t('common.error'),
+        description: t('admin.fillfields'),
         variant: "destructive",
       });
       return;
@@ -116,8 +118,8 @@ const Communications = () => {
 
     if (smsData.recipientType === 'custom' && !smsData.customPhone) {
       toast({
-        title: "Error",
-        description: "Please enter a phone number",
+        title: t('common.error'),
+        description: t('admin.enterphone'),
         variant: "destructive",
       });
       return;
@@ -137,7 +139,7 @@ const Communications = () => {
       if (error) throw error;
 
       toast({
-        title: "SMS Sent Successfully",
+        title: t('admin.smssent'),
         description: `SMS sent to ${recipient}`,
       });
 
@@ -145,8 +147,8 @@ const Communications = () => {
     } catch (error) {
       console.error('Error sending SMS:', error);
       toast({
-        title: "Error",
-        description: "Failed to send SMS. Please check the phone number and try again.",
+        title: t('common.error'),
+        description: t('admin.smsfailed'),
         variant: "destructive",
       });
     } finally {
@@ -159,7 +161,7 @@ const Communications = () => {
       <div className="flex items-center gap-4 mb-6">
         <Mail className="h-8 w-8 text-primary" />
         <div>
-          <h1 className="text-3xl font-bold">Communications</h1>
+          <h1 className="text-3xl font-bold">{t('admin.communications')}</h1>
           <p className="text-muted-foreground">Send emails and SMS to users</p>
         </div>
       </div>
@@ -168,15 +170,15 @@ const Communications = () => {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="email" className="flex items-center gap-2">
             <Mail className="h-4 w-4" />
-            Email
+            {t('admin.sendemail')}
           </TabsTrigger>
           <TabsTrigger value="sms" className="flex items-center gap-2">
             <MessageSquare className="h-4 w-4" />
-            SMS
+            {t('admin.sendsms')}
           </TabsTrigger>
           <TabsTrigger value="phonebook" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            Phone Numbers
+            {t('admin.phonenumbers')}
           </TabsTrigger>
         </TabsList>
 
@@ -190,24 +192,24 @@ const Communications = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email-recipient">Recipient</Label>
+                <Label htmlFor="email-recipient">{t('admin.recipient')}</Label>
                 <Select
                   value={emailData.recipientType}
                   onValueChange={(value) => setEmailData({ ...emailData, recipientType: value, customEmail: '' })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select recipient type" />
+                    <SelectValue placeholder={t('admin.selectrecipient')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Users</SelectItem>
-                    <SelectItem value="farmers">All Farmers</SelectItem>
-                    <SelectItem value="buyers">All Buyers</SelectItem>
-                    <SelectItem value="custom">Custom Email</SelectItem>
+                    <SelectItem value="all">{t('admin.allusers')}</SelectItem>
+                    <SelectItem value="farmers">{t('admin.allfarmers')}</SelectItem>
+                    <SelectItem value="buyers">{t('admin.allbuyers')}</SelectItem>
+                    <SelectItem value="custom">{t('admin.customEmail')}</SelectItem>
                   </SelectContent>
                 </Select>
                 {emailData.recipientType === 'custom' && (
                   <Input
-                    placeholder="Enter email address"
+                    placeholder={t('admin.enteremail')}
                     type="email"
                     value={emailData.customEmail}
                     onChange={(e) => setEmailData({ ...emailData, customEmail: e.target.value })}
@@ -216,20 +218,20 @@ const Communications = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email-subject">Subject</Label>
+                <Label htmlFor="email-subject">{t('admin.subject')}</Label>
                 <Input
                   id="email-subject"
-                  placeholder="Enter email subject"
+                  placeholder={t('admin.entersubject')}
                   value={emailData.subject}
                   onChange={(e) => setEmailData({ ...emailData, subject: e.target.value })}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email-message">Message</Label>
+                <Label htmlFor="email-message">{t('admin.message')}</Label>
                 <Textarea
                   id="email-message"
-                  placeholder="Enter your message"
+                  placeholder={t('admin.entermessage')}
                   rows={6}
                   value={emailData.message}
                   onChange={(e) => setEmailData({ ...emailData, message: e.target.value })}
@@ -238,7 +240,7 @@ const Communications = () => {
 
               <Button onClick={handleSendEmail} className="w-full" disabled={sending}>
                 <Send className="h-4 w-4 mr-2" />
-                {sending ? 'Sending Email...' : 'Send Email'}
+                {sending ? t('admin.sendingemail') : t('admin.sendemail')}
               </Button>
             </CardContent>
           </Card>
@@ -254,19 +256,19 @@ const Communications = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="sms-recipient">Recipient</Label>
+                <Label htmlFor="sms-recipient">{t('admin.recipient')}</Label>
                 <Select
                   value={smsData.recipientType}
                   onValueChange={(value) => setSmsData({ ...smsData, recipientType: value, customPhone: '' })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select recipient type" />
+                    <SelectValue placeholder={t('admin.selectrecipient')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Users</SelectItem>
-                    <SelectItem value="farmers">All Farmers</SelectItem>
-                    <SelectItem value="buyers">All Buyers</SelectItem>
-                    <SelectItem value="custom">Custom Phone Number</SelectItem>
+                    <SelectItem value="all">{t('admin.allusers')}</SelectItem>
+                    <SelectItem value="farmers">{t('admin.allfarmers')}</SelectItem>
+                    <SelectItem value="buyers">{t('admin.allbuyers')}</SelectItem>
+                    <SelectItem value="custom">{t('admin.customPhone')}</SelectItem>
                   </SelectContent>
                 </Select>
                 {smsData.recipientType === 'custom' && (
@@ -286,7 +288,7 @@ const Communications = () => {
                       </Select>
                       <Input
                         type="tel"
-                        placeholder="Enter phone number"
+                        placeholder={t('admin.enterphonenumber')}
                         className="flex-1"
                         value={smsData.customPhone}
                         onChange={(e) => setSmsData({ ...smsData, customPhone: e.target.value.replace(/[^0-9]/g, '') })}
@@ -297,23 +299,23 @@ const Communications = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="sms-message">Message</Label>
+                <Label htmlFor="sms-message">{t('admin.message')}</Label>
                 <Textarea
                   id="sms-message"
-                  placeholder="Enter your SMS message (max 160 characters)"
+                  placeholder={t('admin.entermessage')}
                   rows={4}
                   maxLength={160}
                   value={smsData.message}
                   onChange={(e) => setSmsData({ ...smsData, message: e.target.value })}
                 />
                 <p className="text-sm text-muted-foreground">
-                  {smsData.message.length}/160 characters
+                  {smsData.message.length}/160 {t('admin.maxchars')}
                 </p>
               </div>
 
               <Button onClick={handleSendSMS} className="w-full" disabled={sending}>
                 <Send className="h-4 w-4 mr-2" />
-                {sending ? 'Sending SMS...' : 'Send SMS'}
+                {sending ? t('admin.sendingsms') : t('admin.sendsms')}
               </Button>
             </CardContent>
           </Card>

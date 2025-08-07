@@ -251,43 +251,6 @@ const About = () => {
         </div>
       </section>
 
-      {/* Team Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <Badge variant="outline" className="mb-4">
-              Our Team
-            </Badge>
-            <h2 className="text-3xl font-bold mb-4">
-              Meet the People Behind AgroLink
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              A passionate team dedicated to transforming Sri Lankan agriculture
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {team.map((member, index) => (
-              <Card key={index} className="text-center">
-                <CardHeader>
-                  <div className="w-20 h-20 bg-gradient-to-br from-green-100 to-blue-100 dark:from-green-900/20 dark:to-blue-900/20 rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <User className="h-10 w-10 text-primary" />
-                  </div>
-                  <CardTitle>{member.name}</CardTitle>
-                  <CardDescription className="font-medium text-primary">
-                    {member.role}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    {getTeamBio(member)}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-green-600 to-blue-600">
