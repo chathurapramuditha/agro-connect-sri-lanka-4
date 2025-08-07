@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Bell, Check, Trash2, MessageSquare, ShoppingCart, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Notification {
   id: string;
@@ -16,6 +17,7 @@ interface Notification {
 }
 
 const Notifications = () => {
+  const { t } = useLanguage();
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: '1',
@@ -55,24 +57,24 @@ const Notifications = () => {
       )
     );
     toast({
-      title: "Marked as read",
-      description: "Notification has been marked as read.",
+      title: t('notifications.markedread'),
+      description: t('notifications.markedread.desc'),
     });
   };
 
   const deleteNotification = (id: string) => {
     setNotifications(prev => prev.filter(notif => notif.id !== id));
     toast({
-      title: "Notification deleted",
-      description: "Notification has been removed.",
+      title: t('notifications.deleted'),
+      description: t('notifications.deleted.desc'),
     });
   };
 
   const markAllAsRead = () => {
     setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
     toast({
-      title: "All notifications marked as read",
-      description: "All notifications have been marked as read.",
+      title: t('notifications.allread'),
+      description: t('notifications.allread.desc'),
     });
   };
 
@@ -97,16 +99,16 @@ const Notifications = () => {
         <div className="flex items-center gap-4">
           <Bell className="h-8 w-8 text-primary" />
           <div>
-            <h1 className="text-3xl font-bold">Notifications</h1>
+            <h1 className="text-3xl font-bold">{t('notifications.title')}</h1>
             <p className="text-muted-foreground">
-              {unreadCount > 0 ? `${unreadCount} unread notifications` : 'All caught up!'}
+              {unreadCount > 0 ? `${unreadCount} ${t('notifications.unread')}` : t('notifications.allcaught')}
             </p>
           </div>
         </div>
         {unreadCount > 0 && (
           <Button onClick={markAllAsRead} variant="outline">
             <Check className="h-4 w-4 mr-2" />
-            Mark All as Read
+            {t('notifications.markallread')}
           </Button>
         )}
       </div>
@@ -116,7 +118,7 @@ const Notifications = () => {
           <Card>
             <CardContent className="text-center py-8">
               <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No notifications yet</p>
+              <p className="text-muted-foreground">{t('notifications.nonefound')}</p>
             </CardContent>
           </Card>
         ) : (
@@ -137,10 +139,10 @@ const Notifications = () => {
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-semibold">{notification.title}</h3>
                           {!notification.read && (
-                            <Badge variant="secondary" className="text-xs">New</Badge>
+                            <Badge variant="secondary" className="text-xs">{t('notifications.new')}</Badge>
                           )}
                           {notification.urgent && (
-                            <Badge variant="destructive" className="text-xs">Urgent</Badge>
+                            <Badge variant="destructive" className="text-xs">{t('notifications.urgent')}</Badge>
                           )}
                         </div>
                         <p className="text-muted-foreground mb-2">{notification.description}</p>

@@ -171,7 +171,7 @@ This ongoing crisis highlights the urgent need for comprehensive health support 
         <div className="mb-12 text-center">
           <h1 className="text-4xl font-bold mb-4">{t('nav.blog')}</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Stay updated with the latest farming tips, market insights, and agricultural innovations
+            {t('blog.subtitle')}
           </p>
         </div>
 
@@ -183,7 +183,7 @@ This ongoing crisis highlights the urgent need for comprehensive health support 
                 <div className="grid lg:grid-cols-2 gap-8 items-center">
                   <div>
                     <Badge className="mb-4 bg-gradient-to-r from-green-600 to-blue-600">
-                      Featured Article
+                      {t('blog.featured')}
                     </Badge>
                     <h2 className="text-3xl font-bold mb-4 leading-tight">
                       {getPostTitle(featuredPost)}
@@ -204,7 +204,7 @@ This ongoing crisis highlights the urgent need for comprehensive health support 
                     </div>
                     <Button size="lg" className="gap-2" asChild>
                       <Link to={`/blog/article/${featuredPost.id}`}>
-                        Read Article
+                        {t('cta.readarticle')}
                         <ChevronRight className="h-4 w-4" />
                       </Link>
                     </Button>
@@ -230,7 +230,7 @@ This ongoing crisis highlights the urgent need for comprehensive health support 
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
-                placeholder="Search articles..."
+                placeholder={t('blog.search')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -304,7 +304,7 @@ This ongoing crisis highlights the urgent need for comprehensive health support 
 
                     <Button variant="outline" className="w-full gap-2" asChild>
                       <Link to={`/blog/article/${post.id}`}>
-                        Read More
+                        {t('blog.readmore')}
                         <ChevronRight className="h-4 w-4" />
                       </Link>
                     </Button>
@@ -319,9 +319,9 @@ This ongoing crisis highlights the urgent need for comprehensive health support 
             <div className="bg-muted rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
               <Search className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium mb-2">No articles found</h3>
+            <h3 className="text-lg font-medium mb-2">{t('blog.noresults')}</h3>
             <p className="text-muted-foreground">
-              Try adjusting your search terms or filters
+              {t('blog.noresults.description')}
             </p>
           </div>
         )}
@@ -330,9 +330,9 @@ This ongoing crisis highlights the urgent need for comprehensive health support 
         <div className="mt-16">
           <Card className="bg-gradient-to-r from-green-600 to-blue-600 border-0 text-white">
             <CardContent className="p-8 text-center">
-              <h3 className="text-2xl font-bold mb-2">Stay Updated</h3>
+              <h3 className="text-2xl font-bold mb-2">{t('blog.stayupdated')}</h3>
               <p className="mb-6 text-green-100">
-                Subscribe to our newsletter for the latest farming tips and market insights
+                {t('blog.newsletter')}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
                 <Input 

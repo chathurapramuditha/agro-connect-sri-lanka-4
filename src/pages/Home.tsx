@@ -93,35 +93,35 @@ const Home = () => {
   const features = [
     {
       icon: <Brain className="h-8 w-8" />,
-      title: 'AI-Powered Insights',
-      description: 'Get intelligent crop recommendations, price predictions, and farming advice',
+      title: t('features.ai.title'),
+      description: t('features.ai.description'),
       color: 'bg-blue-500/10 text-blue-600'
     },
     {
       icon: <Users className="h-8 w-8" />,
-      title: 'Direct Connection',
-      description: 'Connect farmers and buyers without middlemen for fair pricing',
+      title: t('features.connection.title'),
+      description: t('features.connection.description'),
       color: 'bg-green-500/10 text-green-600'
     },
     {
       icon: <TrendingUp className="h-8 w-8" />,
-      title: 'Market Intelligence',
-      description: 'Real-time market prices and demand forecasting',
+      title: t('features.market.title'),
+      description: t('features.market.description'),
       color: 'bg-purple-500/10 text-purple-600'
     },
     {
       icon: <Globe className="h-8 w-8" />,
-      title: 'Multilingual Support',
-      description: 'Available in English, Sinhala, and Tamil languages',
+      title: t('features.multilingual.title'),
+      description: t('features.multilingual.description'),
       color: 'bg-orange-500/10 text-orange-600'
     }
   ];
 
   const stats = [
-    { number: '1000+', label: 'Active Farmers' },
-    { number: '500+', label: 'Verified Buyers' },
-    { number: '50+', label: 'Crop Varieties' },
-    { number: '24/7', label: 'AI Support' }
+    { number: '1000+', label: t('home.stats.farmers') },
+    { number: '500+', label: t('home.stats.buyers') },
+    { number: '50+', label: t('home.stats.varieties') },
+    { number: '24/7', label: t('home.stats.support') }
   ];
 
   return (
@@ -230,13 +230,13 @@ const Home = () => {
           <div className="container mx-auto px-4 py-20">
             <div className="mb-8 text-center">
               <Badge variant="secondary" className="mb-4">
-                🌾 Latest Agricultural Insights
+                🌾 {t('blog.insights')}
               </Badge>
               <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-                Stay Updated with Farming News
+                {t('home.blog.title')}
               </h2>
               <p className="text-xl text-muted-foreground">
-                Discover the latest trends, tips, and insights from the agricultural world
+                {t('home.blog.description')}
               </p>
             </div>
 
@@ -262,13 +262,13 @@ const Home = () => {
                       <div className="flex gap-4">
                         <Button asChild className="gap-2">
                           <Link to={`/blog/article/${blogPosts[currentSlide].id}`}>
-                            Read Full Article
+                            {t('blog.readfull')}
                             <ArrowRight className="h-4 w-4" />
                           </Link>
                         </Button>
                         <Button variant="outline" asChild>
                           <Link to="/blog">
-                            View All Articles
+                            {t('blog.viewall')}
                           </Link>
                         </Button>
                       </div>
@@ -327,7 +327,7 @@ const Home = () => {
       <section className="py-20 bg-background">
         <div className="container mx-auto px-4">
           <div className="text-center space-y-4 mb-16">
-            <Badge variant="outline">Features</Badge>
+            <Badge variant="outline">{t('common.filter')}</Badge>
             <h2 className="text-3xl lg:text-4xl font-bold">
               {t('home.ai.title')}
             </h2>
@@ -361,22 +361,22 @@ const Home = () => {
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-3xl mx-auto space-y-6">
             <h2 className="text-3xl lg:text-4xl font-bold text-white">
-              Ready to Transform Sri Lankan Agriculture?
+              {t('home.cta.title')}
             </h2>
             <p className="text-xl text-green-100">
-              Join thousands of farmers and buyers already using our AI-powered platform
+              {t('home.cta.description')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Button size="lg" variant="secondary" asChild>
                 <Link to="/marketplace">
-                  Explore Marketplace
+                  {t('cta.explore')}
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="bg-transparent border-white text-white hover:bg-white hover:text-green-600" asChild>
                 <Link to="/ai-chat">
                   <MessageSquare className="h-4 w-4 mr-2" />
-                  Try AI Assistant
+                  {t('cta.tryai')}
                 </Link>
               </Button>
             </div>
