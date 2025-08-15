@@ -18,7 +18,7 @@ class DatabaseManager:
     
     async def get_connection(self):
         """Get database connection"""
-        return await aiosqlite.connect(self.db_path)
+        return aiosqlite.connect(self.db_path)
     
     async def init_database(self):
         """Initialize database with all tables"""
