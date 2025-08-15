@@ -44,13 +44,13 @@ class BackendTester:
         url = f"{self.base_url}{endpoint}"
         try:
             if method.upper() == "GET":
-                response = requests.get(url, params=params, timeout=30)
+                response = requests.get(url, params=params, timeout=30, allow_redirects=True)
             elif method.upper() == "POST":
-                response = requests.post(url, json=data, timeout=30)
+                response = requests.post(url, json=data, timeout=30, allow_redirects=True)
             elif method.upper() == "PUT":
-                response = requests.put(url, json=data, timeout=30)
+                response = requests.put(url, json=data, timeout=30, allow_redirects=True)
             elif method.upper() == "DELETE":
-                response = requests.delete(url, timeout=30)
+                response = requests.delete(url, timeout=30, allow_redirects=True)
             else:
                 raise ValueError(f"Unsupported method: {method}")
             
