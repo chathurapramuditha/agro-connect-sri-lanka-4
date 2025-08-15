@@ -116,13 +116,13 @@ class BackendTester:
         created_users = []
         for user_data in users_data:
             result = self.make_request("POST", "/users", user_data)
-            if result["success"]:
+            if result["success"] and isinstance(result["data"], dict) and "user_id" in result["data"]:
                 created_users.append(result["data"])
                 self.test_data[f"{user_data['user_type']}_user"] = result["data"]
                 self.log_result(
                     f"Create {user_data['user_type']} user",
                     True,
-                    f"Created user: {result['data']['full_name']}"
+                    f"Created user: {result['data'].get('full_name', 'Unknown')}"
                 )
             else:
                 self.log_result(
