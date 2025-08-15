@@ -3,8 +3,8 @@ from typing import List, Optional
 import uuid
 from datetime import datetime
 
-from ..database import db_manager
-from ..models import User, UserCreate, UserUpdate, UserWithProfile, Profile
+from database import db_manager
+from models import User, UserCreate, UserUpdate, UserWithProfile, Profile
 
 router = APIRouter(prefix="/users", tags=["users"])
 
