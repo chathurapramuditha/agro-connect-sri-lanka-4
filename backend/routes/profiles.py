@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException
 import uuid
 from datetime import datetime
 
-from ..database import db_manager
-from ..models import Profile, ProfileCreate, ProfileUpdate
+from database import db_manager
+from models import Profile, ProfileCreate, ProfileUpdate
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
 

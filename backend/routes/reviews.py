@@ -3,8 +3,8 @@ from typing import List, Optional
 import uuid
 from datetime import datetime
 
-from ..database import db_manager
-from ..models import Review, ReviewCreate, ReviewUpdate
+from database import db_manager
+from models import Review, ReviewCreate, ReviewUpdate
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
 
