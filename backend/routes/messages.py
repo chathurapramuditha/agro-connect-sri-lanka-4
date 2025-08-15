@@ -3,8 +3,8 @@ from typing import List, Optional
 import uuid
 from datetime import datetime
 
-from ..database import db_manager
-from ..models import Message, MessageCreate, MessageUpdate
+from database import db_manager
+from models import Message, MessageCreate, MessageUpdate
 
 router = APIRouter(prefix="/messages", tags=["messages"])
 

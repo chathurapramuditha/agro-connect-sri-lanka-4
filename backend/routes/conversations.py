@@ -3,8 +3,8 @@ from typing import List, Optional
 import uuid
 from datetime import datetime
 
-from ..database import db_manager
-from ..models import Conversation, ConversationCreate, ConversationWithLastMessage
+from database import db_manager
+from models import Conversation, ConversationCreate, ConversationWithLastMessage
 
 router = APIRouter(prefix="/conversations", tags=["conversations"])
 

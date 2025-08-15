@@ -3,8 +3,8 @@ from typing import List, Optional
 import uuid
 from datetime import datetime
 
-from ..database import db_manager
-from ..models import Order, OrderCreate, OrderUpdate, OrderWithDetails
+from database import db_manager
+from models import Order, OrderCreate, OrderUpdate, OrderWithDetails
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
