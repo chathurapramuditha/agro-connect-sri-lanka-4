@@ -115,7 +115,7 @@ class BackendTester:
         
         created_users = []
         for user_data in users_data:
-            result = self.make_request("POST", "/users", user_data)
+            result = self.make_request("POST", "/users/", user_data)
             if result["success"] and isinstance(result["data"], dict) and "user_id" in result["data"]:
                 created_users.append(result["data"])
                 self.test_data[f"{user_data['user_type']}_user"] = result["data"]
@@ -133,7 +133,7 @@ class BackendTester:
                 )
         
         # Test get all users
-        result = self.make_request("GET", "/users")
+        result = self.make_request("GET", "/users/")
         self.log_result(
             "Get all users",
             result["success"] and len(result["data"]) >= len(created_users),
@@ -153,7 +153,7 @@ class BackendTester:
             )
         
         # Test user filtering
-        result = self.make_request("GET", "/users", params={"user_type": "farmer"})
+        result = self.make_request("GET", "/users/", params={"user_type": "farmer"})
         self.log_result(
             "Filter users by type",
             result["success"],
