@@ -187,7 +187,7 @@ class BackendTester:
         
         created_categories = []
         for category_data in categories_data:
-            result = self.make_request("POST", "/categories", category_data)
+            result = self.make_request("POST", "/categories/", category_data)
             if result["success"]:
                 created_categories.append(result["data"])
                 self.test_data[f"category_{category_data['name'].lower()}"] = result["data"]
@@ -213,7 +213,7 @@ class BackendTester:
                     "description": "Spinach, lettuce, kale, etc.",
                     "parent_category_id": vegetables_id
                 }
-                result = self.make_request("POST", "/categories", subcategory_data)
+                result = self.make_request("POST", "/categories/", subcategory_data)
                 self.log_result(
                     "Create subcategory",
                     result["success"],
@@ -222,7 +222,7 @@ class BackendTester:
                 )
         
         # Test get all categories
-        result = self.make_request("GET", "/categories")
+        result = self.make_request("GET", "/categories/")
         self.log_result(
             "Get all categories",
             result["success"] and len(result["data"]) >= len(created_categories),
