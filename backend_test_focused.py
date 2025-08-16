@@ -284,7 +284,7 @@ class FocusedBackendTester:
             )
         
         # Test get all products
-        result = self.make_request("GET", "/products")
+        result = self.make_request("GET", "/products/")
         self.log_result(
             "Get all products",
             result["success"] and isinstance(result["data"], list),
