@@ -188,7 +188,7 @@ class BackendTester:
         created_categories = []
         for category_data in categories_data:
             result = self.make_request("POST", "/categories/", category_data)
-            if result["success"]:
+            if result["success"] and isinstance(result["data"], dict):
                 created_categories.append(result["data"])
                 self.test_data[f"category_{category_data['name'].lower()}"] = result["data"]
                 self.log_result(
