@@ -285,7 +285,7 @@ class BackendTester:
         created_products = []
         for product_data in products_data:
             result = self.make_request("POST", "/products", product_data)
-            if result["success"]:
+            if result["success"] and isinstance(result["data"], dict):
                 created_products.append(result["data"])
                 self.test_data[f"product_{product_data['name'].lower().replace(' ', '_')}"] = result["data"]
                 self.log_result(
