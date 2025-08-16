@@ -6,16 +6,22 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import apiService from '@/services/api';
 
 interface UserProfile {
-  id: string;
   user_id: string;
-  full_name: string;
   user_type: 'admin' | 'farmer' | 'buyer';
-  avatar_url?: string;
-  location?: string;
+  full_name: string;
+  email?: string;
   phone_number?: string;
+  location?: string;
+  is_active: boolean;
+  profile?: {
+    avatar_url?: string;
+    city?: string;
+    state?: string;
+    address?: string;
+  };
 }
 
 interface UserSearchDropdownProps {
