@@ -636,7 +636,7 @@ class BackendTester:
         created_profiles = []
         for profile_data in profiles_data:
             result = self.make_request("POST", "/profiles", profile_data)
-            if result["success"]:
+            if result["success"] and isinstance(result["data"], dict):
                 created_profiles.append(result["data"])
                 user_type = "farmer" if profile_data["user_id"] == farmer_user["user_id"] else "buyer"
                 self.test_data[f"profile_{user_type}"] = result["data"]
