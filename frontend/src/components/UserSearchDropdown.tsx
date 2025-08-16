@@ -170,14 +170,14 @@ const UserSearchDropdown = ({
               <div className="divide-y">
                 {filteredUsers.map((user) => (
                   <div
-                    key={user.id}
+                    key={user.user_id}
                     className="p-4 hover:bg-muted/50 cursor-pointer transition-colors"
                     onClick={() => handleUserSelect(user)}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3 flex-1">
                         <Avatar className="h-10 w-10">
-                          <AvatarImage src={user.avatar_url} />
+                          <AvatarImage src={user.profile?.avatar_url} />
                           <AvatarFallback>
                             {user.full_name.split(' ').map(n => n[0]).join('').toUpperCase()}
                           </AvatarFallback>
@@ -191,9 +191,9 @@ const UserSearchDropdown = ({
                               {getUserTypeLabel(user.user_type)}
                             </Badge>
                           </div>
-                          {user.location && (
+                          {(user.location || user.profile?.city) && (
                             <p className="text-sm text-muted-foreground truncate">
-                              📍 {user.location}
+                              📍 {user.location || user.profile?.city || user.profile?.address}
                             </p>
                           )}
                           {user.phone_number && (
