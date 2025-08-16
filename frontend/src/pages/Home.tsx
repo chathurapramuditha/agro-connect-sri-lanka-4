@@ -10,10 +10,10 @@ import heroImage from '@/assets/hero-agriculture.jpg';
 
 const Home = () => {
   const { t } = useLanguage();
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Check authentication status
+  // Auto-advance slideshow for authenticated users
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
