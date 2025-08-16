@@ -49,22 +49,24 @@ const UserSearchDropdown = ({
     const fetchUsers = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, user_id, full_name, user_type, avatar_url, location, phone_number')
-          .order('full_name');
+        const usersData = await apiService.getUsers();
+        
+        // Enrich users with profile data
+        const enrichedUsers = await Promise.all(
+          usersData.map(async (user: any) => {
+            try {
+              const profile = await apiService.getProfile(user.user_id).catch(() => null);
+              return {
+                ...user,
+                profile
+              };
+            } catch {
+              return user;
+            }
+          })
+        );
 
-        if (error) {
-          console.error('Error fetching users:', error);
-          toast({
-            title: "Error",
-            description: "Failed to load users",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        setUsers((data || []) as UserProfile[]);
+        setUsers(enrichedUsers as UserProfile[]);
       } catch (error) {
         console.error('Error fetching users:', error);
         toast({
