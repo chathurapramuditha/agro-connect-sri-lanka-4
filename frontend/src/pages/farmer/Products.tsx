@@ -1,24 +1,31 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Package, Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import apiService from '@/services/api';
+import websocketService from '@/services/websocket';
 
 interface Product {
-  id: string;
+  product_id: string;
+  seller_id: string;
+  category_id: string;
   name: string;
   description: string;
-  price_per_kg: number;
+  price: number;
   quantity_available: number;
   unit: string;
-  is_available: boolean;
-  is_organic: boolean;
+  images?: string;
   location: string;
-  harvest_date: string;
+  harvest_date?: string;
+  expiry_date?: string;
+  is_organic: boolean;
+  status: 'active' | 'inactive' | 'sold_out';
   created_at: string;
+  updated_at: string;
 }
 
 const Products = () => {
@@ -26,46 +33,32 @@ const Products = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
-    fetchProducts();
-    
-    // Set up real-time subscription for product updates
-    const channel = supabase
-      .channel('products-updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
-        console.log('Product updated:', payload);
-        fetchProducts();
-      })
-      .subscribe();
+    if (user) {
+      fetchProducts();
+      
+      // Set up WebSocket connection for real-time updates
+      websocketService.connect(user.user_id);
+      websocketService.on('product_updated', handleProductUpdate);
+      websocketService.on('product_created', handleProductCreated);
+      websocketService.on('product_deleted', handleProductDeleted);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      websocketService.off('product_updated', handleProductUpdate);
+      websocketService.off('product_created', handleProductCreated);
+      websocketService.off('product_deleted', handleProductDeleted);
     };
-  }, []);
+  }, [user]);
 
   const fetchProducts = async () => {
+    if (!user) return;
+    
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Get user's profile first
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!profile) return;
-
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('farmer_id', profile.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setProducts(data || []);
+      const data = await apiService.getProductsBySeller(user.user_id);
+      setProducts(data);
     } catch (error) {
       console.error('Error fetching products:', error);
       toast({
@@ -78,24 +71,42 @@ const Products = () => {
     }
   };
 
-  const toggleAvailability = async (productId: string, currentStatus: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('products')
-        .update({ is_available: !currentStatus })
-        .eq('id', productId);
+  // WebSocket event handlers
+  const handleProductUpdate = (data: any) => {
+    if (data.seller_id === user?.user_id) {
+      setProducts(prev => prev.map(product => 
+        product.product_id === data.product_id ? { ...product, ...data } : product
+      ));
+    }
+  };
 
-      if (error) throw error;
+  const handleProductCreated = (data: any) => {
+    if (data.seller_id === user?.user_id) {
+      setProducts(prev => [data, ...prev]);
+    }
+  };
+
+  const handleProductDeleted = (data: any) => {
+    if (data.seller_id === user?.user_id) {
+      setProducts(prev => prev.filter(product => product.product_id !== data.product_id));
+    }
+  };
+
+  const toggleAvailability = async (productId: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      
+      await apiService.updateProduct(productId, { status: newStatus });
 
       setProducts(products.map(product => 
-        product.id === productId 
-          ? { ...product, is_available: !currentStatus }
+        product.product_id === productId 
+          ? { ...product, status: newStatus }
           : product
       ));
 
       toast({
         title: "Success",
-        description: `Product ${!currentStatus ? 'made available' : 'made unavailable'}`,
+        description: `Product ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`,
       });
     } catch (error) {
       console.error('Error updating product:', error);
@@ -113,14 +124,9 @@ const Products = () => {
     }
 
     try {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', productId);
+      await apiService.deleteProduct(productId);
 
-      if (error) throw error;
-
-      setProducts(products.filter(product => product.id !== productId));
+      setProducts(products.filter(product => product.product_id !== productId));
 
       toast({
         title: "Success",
@@ -177,7 +183,7 @@ const Products = () => {
       ) : (
         <div className="grid gap-6">
           {products.map((product) => (
-            <Card key={product.id}>
+            <Card key={product.product_id}>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
@@ -188,8 +194,11 @@ const Products = () => {
                           Organic
                         </Badge>
                       )}
-                      <Badge variant={product.is_available ? "default" : "destructive"}>
-                        {product.is_available ? "Available" : "Unavailable"}
+                      <Badge 
+                        variant={product.status === 'active' ? "default" : 
+                                product.status === 'inactive' ? "secondary" : "destructive"}
+                      >
+                        {product.status}
                       </Badge>
                     </CardTitle>
                     <CardDescription>
@@ -197,7 +206,7 @@ const Products = () => {
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold">Rs. {product.price_per_kg}/{product.unit}</span>
+                    <span className="text-lg font-bold">Rs. {product.price}/{product.unit}</span>
                   </div>
                 </div>
               </CardHeader>
@@ -234,7 +243,7 @@ const Products = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate(`/farmer/products/edit/${product.id}`)}
+                    onClick={() => navigate(`/farmer/products/edit/${product.product_id}`)}
                     className="flex items-center gap-2"
                   >
                     <Edit className="h-4 w-4" />
@@ -242,20 +251,20 @@ const Products = () => {
                   </Button>
                   
                   <Button
-                    variant={product.is_available ? "outline" : "default"}
+                    variant={product.status === 'active' ? "outline" : "default"}
                     size="sm"
-                    onClick={() => toggleAvailability(product.id, product.is_available)}
+                    onClick={() => toggleAvailability(product.product_id, product.status)}
                     className="flex items-center gap-2"
                   >
-                    {product.is_available ? (
+                    {product.status === 'active' ? (
                       <>
                         <EyeOff className="h-4 w-4" />
-                        Make Unavailable
+                        Deactivate
                       </>
                     ) : (
                       <>
                         <Eye className="h-4 w-4" />
-                        Make Available
+                        Activate
                       </>
                     )}
                   </Button>
@@ -263,7 +272,7 @@ const Products = () => {
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => deleteProduct(product.id)}
+                    onClick={() => deleteProduct(product.product_id)}
                     className="flex items-center gap-2"
                   >
                     <Trash2 className="h-4 w-4" />
