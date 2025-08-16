@@ -710,7 +710,7 @@ class BackendTester:
         created_reviews = []
         for i, review_data in enumerate(reviews_data):
             result = self.make_request("POST", "/reviews", review_data)
-            if result["success"]:
+            if result["success"] and isinstance(result["data"], dict):
                 created_reviews.append(result["data"])
                 self.test_data[f"review_{i+1}"] = result["data"]
                 self.log_result(
