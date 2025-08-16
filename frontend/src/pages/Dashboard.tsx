@@ -66,7 +66,7 @@ const Dashboard = () => {
                     </div>
                   </>
                 )}
-                {profile.user_type === 'farmer' && (
+                {user.user_type === 'farmer' && (
                   <>
                     <div 
                       className="p-6 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
