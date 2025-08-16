@@ -24,6 +24,46 @@ const Home = () => {
       return () => clearInterval(timer);
     }
   }, [user, blogPosts.length]);
+
+  // Sample blog posts for slideshow
+  const blogPosts = [
+    {
+      id: 1,
+      title: "AI Crop Recommendations Transform Sri Lankan Agriculture",
+      excerpt: "Revolutionary AI technology helps farmers increase yields by 30% through smart crop selection and timing.",
+      category: "Technology",
+      author: "Dr. Priya Kumari",
+      date: "2024-03-15",
+      image: "🌱"
+    },
+    {
+      id: 2,
+      title: "Sustainable Farming Practices Combat Climate Change",
+      excerpt: "Eco-friendly methods that boost productivity while protecting the environment for future generations.",
+      category: "Sustainability", 
+      author: "Ravi Perera",
+      date: "2024-03-12",
+      image: "🌿"
+    },
+    {
+      id: 3,
+      title: "Market Analysis: Record Vegetable Prices in March 2024",
+      excerpt: "Comprehensive analysis reveals 25% price increase for key vegetables due to weather conditions.",
+      category: "Market Analysis",
+      author: "Sanduni Silva", 
+      date: "2024-03-10",
+      image: "📈"
+    },
+    {
+      id: 4,
+      title: "Water Conservation Techniques Save Farms During Drought",
+      excerpt: "Innovative irrigation methods help farmers maintain crops despite challenging dry season conditions.",
+      category: "Water Management",
+      author: "Thilak Fernando",
+      date: "2024-03-08", 
+      image: "💧"
+    }
+  ];
   useEffect(() => {
     if (user) {
       const timer = setInterval(() => {
