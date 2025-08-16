@@ -389,7 +389,7 @@ class BackendTester:
         created_orders = []
         for i, order_data in enumerate(orders_data):
             result = self.make_request("POST", "/orders", order_data)
-            if result["success"]:
+            if result["success"] and isinstance(result["data"], dict):
                 created_orders.append(result["data"])
                 self.test_data[f"order_{i+1}"] = result["data"]
                 self.log_result(
