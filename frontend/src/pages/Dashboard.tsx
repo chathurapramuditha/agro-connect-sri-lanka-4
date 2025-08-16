@@ -1,16 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Loader } from 'lucide-react';
-
-interface UserProfile {
-  id: string;
-  user_type: string;
-  full_name: string;
-}
 
 const Dashboard = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
