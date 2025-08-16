@@ -464,7 +464,7 @@ class BackendTester:
         }
         
         result = self.make_request("POST", "/conversations", conversation_data)
-        if result["success"]:
+        if result["success"] and isinstance(result["data"], dict):
             conversation = result["data"]
             self.test_data["conversation"] = conversation
             self.log_result(
