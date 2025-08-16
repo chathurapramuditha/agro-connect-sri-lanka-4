@@ -93,7 +93,9 @@ const UserSearchDropdown = ({
     const filtered = users.filter(user =>
       user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.user_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user.location && user.location.toLowerCase().includes(searchTerm.toLowerCase()))
+      (user.location && user.location.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (user.profile?.city && user.profile.city.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (user.profile?.state && user.profile.state.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     setFilteredUsers(filtered);
