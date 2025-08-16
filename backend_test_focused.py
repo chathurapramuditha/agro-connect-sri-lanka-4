@@ -247,7 +247,7 @@ class FocusedBackendTester:
             "is_organic": True
         }
         
-        result = self.make_request("POST", "/products", product_data)
+        result = self.make_request("POST", "/products/", product_data)
         if result["success"] and isinstance(result["data"], dict):
             self.test_data["test_product"] = result["data"]
             self.log_result(
