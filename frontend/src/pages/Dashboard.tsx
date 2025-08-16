@@ -7,36 +7,8 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Loader } from 'lucide-react';
 
 const Dashboard = () => {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, profile, loading } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const getProfile = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          setLoading(false);
-          return;
-        }
-
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        setProfile(profile);
-      } catch (error) {
-        console.error('Error fetching profile:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getProfile();
-  }, []);
 
   if (loading) {
     return (
@@ -46,7 +18,7 @@ const Dashboard = () => {
     );
   }
 
-  if (!profile) {
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
