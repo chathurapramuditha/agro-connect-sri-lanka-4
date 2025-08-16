@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, MapPin, Star, Phone, MessageCircle, Leaf, TrendingUp, ShoppingCart, Plus, Users } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -10,6 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
+import apiService from '@/services/api';
+import websocketService from '@/services/websocket';
+import { useAuth } from '@/contexts/AuthContext';
 import UserSearchDropdown from '@/components/UserSearchDropdown';
 import productTomatoes from '@/assets/product-tomatoes.jpg';
 import productCoconuts from '@/assets/product-coconuts.jpg';
@@ -17,192 +19,264 @@ import productRice from '@/assets/product-rice.jpg';
 import productGreenBeans from '@/assets/product-green-beans.jpg';
 import marketplaceHero from '@/assets/marketplace-hero.jpg';
 
+interface Product {
+  product_id: string;
+  seller_id: string;
+  category_id: string;
+  name: string;
+  description: string;
+  price: number;
+  quantity_available: number;
+  unit: string;
+  images?: string;
+  location: string;
+  harvest_date?: string;
+  expiry_date?: string;
+  is_organic: boolean;
+  status: string;
+  created_at: string;
+  seller_name?: string;
+  seller_phone?: string;
+  category_name?: string;
+}
+
 const Marketplace = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch products from Supabase
+  // Fetch products and categories
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
     
-    // Set up real-time subscription for product updates
-    const channel = supabase
-      .channel('marketplace-products')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
-        console.log('Product updated in marketplace:', payload);
-        fetchProducts(); // Refresh products when any change occurs
-      })
-      .subscribe();
+    // Set up WebSocket connection for real-time updates
+    if (user) {
+      websocketService.connect(user.user_id);
+      
+      // Listen for product updates
+      websocketService.on('product_updated', handleProductUpdate);
+      websocketService.on('product_created', handleProductCreated);
+      websocketService.on('product_deleted', handleProductDeleted);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      websocketService.off('product_updated', handleProductUpdate);
+      websocketService.off('product_created', handleProductCreated);
+      websocketService.off('product_deleted', handleProductDeleted);
     };
-  }, []);
+  }, [user]);
 
   const fetchProducts = async () => {
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
-          *,
-          profiles!products_farmer_id_fkey(full_name, phone_number, location),
-          product_categories(name, name_sinhala, name_tamil)
-        `)
-        .eq('is_available', true)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const data = await apiService.getProducts();
       
-      const formattedProducts = data?.map(product => ({
-        id: product.id,
-        name: product.name,
-        nameSi: product.name_sinhala || product.name,
-        nameTa: product.name_tamil || product.name,
-        category: product.product_categories?.name?.toLowerCase() || 'other',
-        price: product.price_per_kg,
-        unit: product.unit,
-        quantity: `${product.quantity_available} ${product.unit} available`,
-        farmer: product.profiles?.full_name || 'Unknown Farmer',
-        farmerPhone: product.profiles?.phone_number || 'N/A',
-        location: product.location || product.profiles?.location || 'Unknown Location',
-        rating: 4.5 + Math.random() * 0.5, // Mock rating for now
-        image: product.images?.[0] || '/placeholder.svg',
-        description: product.description || 'Fresh produce',
-        aiScore: 85 + Math.floor(Math.random() * 15),
-        priceChange: Math.floor(Math.random() * 21) - 10,
-        productId: product.id,
-        farmerId: product.farmer_id,
-        isOrganic: product.is_organic
-      })) || [];
+      // Enrich products with seller and category information
+      const enrichedProducts = await Promise.all(
+        data.map(async (product: Product) => {
+          try {
+            // Get seller information
+            const seller = await apiService.getUser(product.seller_id);
+            const sellerProfile = await apiService.getProfile(product.seller_id).catch(() => null);
+            
+            // Get category information
+            const category = await apiService.getCategory(product.category_id).catch(() => null);
+            
+            return {
+              ...product,
+              seller_name: seller?.full_name || 'Unknown Farmer',
+              seller_phone: seller?.phone_number || 'N/A',
+              seller_location: seller?.location || sellerProfile?.city || sellerProfile?.address || 'Unknown Location',
+              category_name: category?.name || 'Other',
+            };
+          } catch (error) {
+            console.error('Error enriching product:', error);
+            return {
+              ...product,
+              seller_name: 'Unknown Farmer',
+              seller_phone: 'N/A',
+              seller_location: 'Unknown Location',
+              category_name: 'Other',
+            };
+          }
+        })
+      );
       
-      setProducts(formattedProducts);
+      setProducts(enrichedProducts);
     } catch (error) {
       console.error('Error fetching products:', error);
       toast({
         title: "Error",
-        description: "Failed to load products",
+        description: "Failed to load products. Using sample data.",
         variant: "destructive",
       });
+      
+      // Fallback to mock data
+      setProducts(mockProducts as any);
     } finally {
       setLoading(false);
     }
   };
 
-  // Mock data kept as fallback
+  const fetchCategories = async () => {
+    try {
+      const data = await apiService.getCategories();
+      const categoryOptions = [
+        { value: 'all', label: t('marketplace.filter.all') || 'All Categories' },
+        ...data.map((cat: any) => ({
+          value: cat.category_id,
+          label: cat.name,
+        }))
+      ];
+      setCategories(categoryOptions);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      // Fallback categories
+      setCategories([
+        { value: 'all', label: t('marketplace.filter.all') || 'All Categories' },
+        { value: 'vegetables', label: t('marketplace.filter.vegetables') || 'Vegetables' },
+        { value: 'fruits', label: t('marketplace.filter.fruits') || 'Fruits' },
+        { value: 'grains', label: t('marketplace.filter.grains') || 'Grains' },
+      ]);
+    }
+  };
+
+  // WebSocket event handlers
+  const handleProductUpdate = (data: any) => {
+    console.log('Product updated:', data);
+    fetchProducts(); // Refresh products
+  };
+
+  const handleProductCreated = (data: any) => {
+    console.log('Product created:', data);
+    fetchProducts(); // Refresh products
+  };
+
+  const handleProductDeleted = (data: any) => {
+    console.log('Product deleted:', data);
+    setProducts(prev => prev.filter(p => p.product_id !== data.product_id));
+  };
+
+  // Mock data as fallback
   const mockProducts = [
     {
-      id: 1,
+      product_id: '1',
       name: 'Fresh Tomatoes',
       nameSi: 'නැවුම් තක්කාලි',
       nameTa: 'புதிய தக்காளி',
       category: 'vegetables',
       price: 150,
       unit: 'kg',
-      quantity: '200 kg available',
-      farmer: 'Sunil Perera',
-      farmerPhone: '+94 77 123 4567',
-      location: 'Kandy',
+      quantity_available: 200,
+      seller_name: 'Sunil Perera',
+      seller_phone: '+94 77 123 4567',
+      seller_location: 'Kandy',
       rating: 4.8,
-      image: productTomatoes,
+      images: productTomatoes,
       description: 'Organic tomatoes grown without pesticides',
       aiScore: 95,
-      priceChange: +12
+      priceChange: +12,
+      is_organic: true,
+      status: 'active'
     },
     {
-      id: 2,
+      product_id: '2',
       name: 'Coconuts',
       nameSi: 'පොල්',
       nameTa: 'தேங்காய்',
       category: 'fruits',
       price: 80,
       unit: 'each',
-      quantity: '500 pieces available',
-      farmer: 'Kamala Silva',
-      farmerPhone: '+94 71 987 6543',
-      location: 'Kurunegala',
+      quantity_available: 500,
+      seller_name: 'Kamala Silva',
+      seller_phone: '+94 71 987 6543',
+      seller_location: 'Kurunegala',
       rating: 4.6,
-      image: productCoconuts,
+      images: productCoconuts,
       description: 'Fresh coconuts harvested this morning',
       aiScore: 88,
-      priceChange: -5
+      priceChange: -5,
+      is_organic: false,
+      status: 'active'
     },
     {
-      id: 3,
+      product_id: '3',
       name: 'Rice (Basmati)',
       nameSi: 'සුදු හාල්',
       nameTa: 'அரிசி',
       category: 'grains',
       price: 280,
       unit: 'kg',
-      quantity: '1000 kg available',
-      farmer: 'Ravi Kumara',
-      farmerPhone: '+94 76 555 1234',
-      location: 'Polonnaruwa',
+      quantity_available: 1000,
+      seller_name: 'Ravi Kumara',
+      seller_phone: '+94 76 555 1234',
+      seller_location: 'Polonnaruwa',
       rating: 4.9,
-      image: productRice,
+      images: productRice,
       description: 'Premium quality basmati rice',
       aiScore: 92,
-      priceChange: +8
+      priceChange: +8,
+      is_organic: false,
+      status: 'active'
     },
     {
-      id: 4,
+      product_id: '4',
       name: 'Green Beans',
       nameSi: 'බෝංචි',
       nameTa: 'பீன்ஸ்',
       category: 'vegetables',
       price: 120,
       unit: 'kg',
-      quantity: '150 kg available',
-      farmer: 'Nimal Fernando',
-      farmerPhone: '+94 78 444 5678',
-      location: 'Nuwara Eliya',
+      quantity_available: 150,
+      seller_name: 'Nimal Fernando',
+      seller_phone: '+94 78 444 5678',
+      seller_location: 'Nuwara Eliya',
       rating: 4.7,
-      image: productGreenBeans,
+      images: productGreenBeans,
       description: 'Fresh green beans from hill country',
       aiScore: 90,
-      priceChange: +3
+      priceChange: +3,
+      is_organic: true,
+      status: 'active'
     }
-  ];
-
-  const categories = [
-    { value: 'all', label: t('marketplace.filter.all') },
-    { value: 'vegetables', label: t('marketplace.filter.vegetables') },
-    { value: 'fruits', label: t('marketplace.filter.fruits') },
-    { value: 'grains', label: t('marketplace.filter.grains') },
   ];
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.farmer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+                         (product.seller_name && product.seller_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                         (product.seller_location && product.seller_location.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesCategory = selectedCategory === 'all' || 
+                           product.category_id === selectedCategory ||
+                           (product.category_name && product.category_name.toLowerCase() === selectedCategory);
+    
+    return matchesSearch && matchesCategory && product.status === 'active';
   });
 
   const getProductName = (product: any) => {
     const { language } = useLanguage();
     switch (language) {
-      case 'si': return product.nameSi;
-      case 'ta': return product.nameTa;
+      case 'si': return product.nameSi || product.name;
+      case 'ta': return product.nameTa || product.name;
       default: return product.name;
     }
   };
 
   const handleChatWithFarmer = (product: any) => {
-    // Navigate to chat page with farmer info
     navigate('/chat', { 
       state: { 
-        farmerName: product.farmer,
-        farmerPhone: product.farmerPhone,
+        farmerName: product.seller_name,
+        farmerPhone: product.seller_phone,
         productName: getProductName(product),
-        productId: product.productId || product.id,
-        farmerId: product.farmerId
+        productId: product.product_id,
+        farmerId: product.seller_id
       }
     });
   };
@@ -210,7 +284,7 @@ const Marketplace = () => {
   const handleContactFarmer = (product: any) => {
     toast({
       title: "Farmer Contact",
-      description: `${product.farmer}: ${product.farmerPhone}`,
+      description: `${product.seller_name}: ${product.seller_phone}`,
       duration: 5000,
     });
   };
@@ -225,7 +299,7 @@ const Marketplace = () => {
   const handleChatWithUser = (user: any) => {
     navigate('/chat', { 
       state: { 
-        userId: user.id,
+        userId: user.user_id,
         userName: user.full_name,
         userType: user.user_type
       }
@@ -252,7 +326,7 @@ const Marketplace = () => {
             />
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
               <div className="text-center text-white">
-                <h1 className="text-4xl font-bold mb-2">{t('marketplace.title')}</h1>
+                <h1 className="text-4xl font-bold mb-2">{t('marketplace.title') || 'Agriculture Marketplace'}</h1>
                 <p className="text-xl">
                   Discover fresh produce from verified Sri Lankan farmers
                 </p>
@@ -282,7 +356,7 @@ const Marketplace = () => {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
-                    placeholder={t('marketplace.search')}
+                    placeholder={t('marketplace.search') || 'Search products, farmers, locations...'}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -327,7 +401,7 @@ const Marketplace = () => {
                   <div>
                     <h3 className="font-medium">AI Market Insights</h3>
                     <p className="text-sm text-muted-foreground">
-                      Tomato prices are expected to increase by 15% next week. Green beans are at optimal buying price.
+                      Fresh produce available from {products.length} active listings. Best prices found!
                     </p>
                   </div>
                 </div>
@@ -343,30 +417,33 @@ const Marketplace = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {filteredProducts.map((product) => (
-                <Card key={product.id} className="group hover:shadow-lg transition-shadow duration-200">
+                <Card key={product.product_id} className="group hover:shadow-lg transition-shadow duration-200">
                   <CardHeader className="p-0">
                     <div className="relative">
                       <div className="aspect-square bg-muted rounded-t-lg overflow-hidden">
                         <img 
-                          src={product.image} 
+                          src={product.images || '/placeholder.svg'} 
                           alt={getProductName(product)}
                           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                         />
                       </div>
                       
-                      {/* AI Score Badge */}
-                      <Badge 
-                        className="absolute top-2 right-2 bg-gradient-to-r from-blue-500 to-purple-500"
-                      >
-                        AI {product.aiScore}%
-                      </Badge>
+                      {/* Organic Badge */}
+                      {product.is_organic && (
+                        <Badge 
+                          className="absolute top-2 right-2 bg-gradient-to-r from-green-500 to-emerald-500"
+                        >
+                          <Leaf className="h-3 w-3 mr-1" />
+                          Organic
+                        </Badge>
+                      )}
 
-                      {/* Price Change Indicator */}
+                      {/* Status Badge */}
                       <Badge 
-                        variant={product.priceChange > 0 ? "destructive" : "secondary"}
+                        variant={product.status === 'active' ? "default" : "secondary"}
                         className="absolute top-2 left-2"
                       >
-                        {product.priceChange > 0 ? '+' : ''}{product.priceChange}%
+                        {product.status}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -387,19 +464,23 @@ const Marketplace = () => {
                           </span>
                           <span className="text-sm text-muted-foreground">/{product.unit}</span>
                         </div>
-                        <Badge variant="outline">{product.quantity}</Badge>
+                        <Badge variant="outline">
+                          {product.quantity_available} {product.unit} available
+                        </Badge>
                       </div>
 
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 text-sm">
                           <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <span>{product.farmer}, {product.location}</span>
+                          <span>{product.seller_name}, {product.seller_location}</span>
                         </div>
                         
                         <div className="flex items-center gap-2">
                           <div className="flex items-center gap-1">
                             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                            <span className="text-sm font-medium">{product.rating}</span>
+                            <span className="text-sm font-medium">
+                              {(4.5 + Math.random() * 0.5).toFixed(1)}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -414,7 +495,7 @@ const Marketplace = () => {
                         onClick={() => handleContactFarmer(product)}
                       >
                         <Phone className="h-4 w-4 mr-2" />
-                        {t('common.contact')}
+                        {t('common.contact') || 'Contact'}
                       </Button>
                       <Button 
                         variant="outline" 
@@ -440,7 +521,7 @@ const Marketplace = () => {
             )}
 
             {/* No Products Results */}
-            {filteredProducts.length === 0 && (
+            {filteredProducts.length === 0 && !loading && (
               <div className="text-center py-12">
                 <div className="bg-muted rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                   <Search className="h-8 w-8 text-muted-foreground" />
