@@ -25,23 +25,23 @@ const Dashboard = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
-        <AppSidebar userType={profile.user_type} />
+        <AppSidebar userType={user.user_type} />
         <div className="flex-1 flex flex-col">
           <header className="h-16 border-b flex items-center px-6">
             <SidebarTrigger />
             <div className="ml-4">
               <h1 className="text-xl font-semibold">
-                Welcome, {profile.full_name}
+                Welcome, {user.full_name}
               </h1>
               <p className="text-sm text-muted-foreground capitalize">
-                {profile.user_type} Dashboard
+                {user.user_type} Dashboard
               </p>
             </div>
           </header>
           <main className="flex-1 p-6">
             <div className="max-w-4xl">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {profile.user_type === 'admin' && (
+                {user.user_type === 'admin' && (
                   <>
                     <div 
                       className="p-6 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
