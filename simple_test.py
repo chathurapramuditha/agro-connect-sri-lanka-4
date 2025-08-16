@@ -6,7 +6,7 @@ Simple test to verify basic API functionality
 import requests
 import json
 
-BASE_URL = "https://sqlite-schema-live.preview.emergentagent.com/api"
+BASE_URL = "https://frontend-test-6.preview.emergentagent.com/api"
 
 def test_basic_functionality():
     print("Testing basic API functionality...")

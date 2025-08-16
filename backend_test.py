@@ -14,7 +14,7 @@ from typing import Dict, List, Any
 import time
 
 # Configuration
-BASE_URL = "https://sqlite-schema-live.preview.emergentagent.com/api"
+BASE_URL = "https://frontend-test-6.preview.emergentagent.com/api"
 WS_URL = "wss://sqlite-schema-live.preview.emergentagent.com/ws"
 
 class BackendTester:
