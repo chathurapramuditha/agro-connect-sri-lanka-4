@@ -52,40 +52,6 @@ const Login = () => {
       setLoading(false);
     }
   };
-        // Check user profile and redirect accordingly
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('user_type')
-          .eq('user_id', data.user.id)
-          .single();
-
-        if (profile?.user_type !== userType) {
-          toast({
-            title: "Access denied",
-            description: `This account is not registered as a ${userType}`,
-            variant: "destructive",
-          });
-          await supabase.auth.signOut();
-          return;
-        }
-
-        toast({
-          title: "Welcome back!",
-          description: `Successfully signed in as ${userType}`,
-        });
-
-        navigate('/dashboard');
-      }
-    } catch (error) {
-      toast({
-        title: "Login failed",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-green-950/20 dark:via-blue-950/20 dark:to-purple-950/20 flex items-center justify-center p-4">
