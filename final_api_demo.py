@@ -82,13 +82,15 @@ def main():
     
     # 7. Messages
     print("\n📨 Recent Messages:")
-    if conversations and len(conversations) > 0:
+    if conversations and isinstance(conversations, list) and len(conversations) > 0:
         conv_id = conversations[0]['conversation_id']
         messages = make_request("GET", "/messages/", params={"conversation_id": conv_id, "limit": 2})
         if messages and isinstance(messages, list):
             for msg in messages[:2]:
                 print(f"  • {msg['content'][:60]}...")
                 print(f"    Read: {'Yes' if msg['is_read'] else 'No'}")
+    else:
+        print("  • No conversations found")
     
     # 8. Reviews
     print("\n⭐ Reviews:")
