@@ -536,7 +536,7 @@ class BackendTester:
         created_messages = []
         for i, message_data in enumerate(messages_data):
             result = self.make_request("POST", "/messages", message_data)
-            if result["success"]:
+            if result["success"] and isinstance(result["data"], dict):
                 created_messages.append(result["data"])
                 self.test_data[f"message_{i+1}"] = result["data"]
                 self.log_result(
